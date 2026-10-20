@@ -135,9 +135,9 @@ window.CV_EJEMPLOS = [
 ];
 
 window.CV_BLANCO = {
-  "nombre": "Tu Nombre",
-  "apellido1": "Primer apellido",
-  "apellido2": "Segundo apellido",
+  "nombre": "Nombre",
+  "apellido1": "Apellido",
+  "apellido2": "Apellido",
   "titular": "Tu profesión o puesto",
   "perfil": "Escribe aquí un resumen de 3–4 líneas: qué haces, tu experiencia y qué buscas.",
   "contacto": { "email": "tu@email.com", "telefono": "600 000 000", "ubicacion": "Ciudad", "linkedin": "", "github": "", "web": "" },

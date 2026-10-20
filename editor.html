@@ -177,7 +177,7 @@
   <button id="rehacer" title="Rehacer (Ctrl+Y)">↷ Rehacer</button>
   <span class="sep"></span>
   <button id="ats" title="Ver cómo queda la versión de una columna para filtros ATS">Versión ATS</button>
-  <button id="nuevo" class="solo-publico" title="Empezar otro CV (ejemplo, en blanco o desde un archivo)">+ Nuevo</button>
+  <button id="nuevo" class="solo-publico" title="Empezar otro CV: en blanco, desde un ejemplo o desde un archivo">+ Nuevo / Ejemplos</button>
   <button id="abrir" title="Abrir un archivo de datos guardado antes">📂 Abrir…</button>
   <button id="guardar" title="Descargar tus datos para seguir editando otro día (Ctrl+S)"><span class="solo-propio">💾 Guardar</span><span class="solo-publico">💾 Guardar mis datos</span></button>
   <button id="pdf" class="guardar">⬇ Descargar PDF</button>
@@ -233,7 +233,7 @@
 </dialog>
 <dialog id="bienvenida">
   <div class="bienv">
-    <header><img src="logo.svg" alt=""><div><h2>Crea tu currículum en minutos</h2><p>Gratis, sin registrarte y sin que tus datos salgan de tu navegador.</p></div></header>
+    <header><img src="logo.svg" alt=""><div><h2>Empezar otro CV</h2><p>Lo que tienes ahora se sustituye: si quieres conservarlo, antes pulsa 💾 Guardar mis datos.</p></div></header>
     <div class="opciones">
       <div><i>📄</i><b>Partir de un ejemplo</b><span>Elige uno parecido a tu sector y cambia los textos por los tuyos.</span><div class="ejemplos" id="ejemplos"></div></div>
       <button type="button" data-empezar="blanco"><i>✨</i><b>Empezar en blanco</b><span>Solo la estructura, con pistas de qué poner en cada parte.</span></button>
@@ -848,8 +848,6 @@ $("#bienvenida").addEventListener("click", e => {
   if (b.dataset.empezar === "blanco") empezar(window.CV_BLANCO);
   if (b.dataset.empezar === "abrir") $("#fichero").click();
 });
-// La primera vez no se puede cerrar sin elegir (Esc empezaría con un CV vacío sin querer)
-$("#bienvenida").addEventListener("cancel", e => { if (!guardadoPublico && !localStorage.getItem(CLAVE)) e.preventDefault(); });
 $("#nuevo").onclick = () => abrirBienvenida();
 $("#ejemplos").innerHTML = (window.CV_EJEMPLOS || []).map(x => `<button type="button" data-empezar="ejemplo:${esc(x.id)}">${esc(x.icono)} ${esc(x.etiqueta)}</button>`).join("");
 
@@ -863,7 +861,8 @@ function revisarBorrador() { try {
   }
 } catch (e) {} }
 construirPanel(); botonesHist(); ajustarZoom();
-if (PUBLICO) { if (!guardadoPublico) abrirBienvenida(); }
+// La primera vez se empieza directamente en blanco; los ejemplos están en "+ Nuevo"
+if (PUBLICO && !guardadoPublico) toast("Haz clic en cualquier texto para cambiarlo · ¿Prefieres partir de un ejemplo? Pulsa + Nuevo", 7000);
 else entrarPropio();
 </script>
 </body>
