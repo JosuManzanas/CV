@@ -3,7 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Editor de CV · JM</title>
+<title>JM-CV Editor · Crea tu CV gratis</title>
+<meta name="description" content="Crea tu currículum gratis, sin registrarte y sin que tus datos salgan de tu navegador. Edita, arrastra y descarga tu CV en PDF.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="JM-CV Editor · Crea tu CV gratis">
+<meta property="og:description" content="Gratis, sin registrarte y sin que tus datos salgan de tu navegador. Descárgalo en PDF en un clic.">
+<meta property="og:image" content="https://josumanzanas.github.io/CV/og-logo.png">
+<meta property="og:url" content="https://josumanzanas.github.io/CV/editor">
+<meta property="og:locale" content="es_ES">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#202080">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
@@ -244,7 +253,7 @@
 const PROPIO = new URLSearchParams(location.search).has("yo") || (() => { try { return !!JSON.parse(localStorage.getItem("cv-jm-github") || "{}").repo; } catch (e) { return false; } })();
 const PUBLICO = !PROPIO;
 document.body.classList.toggle("publico", PUBLICO);
-if (PUBLICO) document.title = "JM-CV Editor · Crea tu CV gratis";
+if (PROPIO) document.title = "Editor de CV · JM";
 
 /* ======================= Estado ======================= */
 const CLAVE = PUBLICO ? "cv-jm-mi-cv" : "cv-jm-borrador";
