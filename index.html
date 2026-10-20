@@ -236,60 +236,16 @@
 
   /* ---------- pantalla estrecha (móvil) ---------- */
   @media screen and (max-width: 820px) {
-    .hoja { width: auto; min-height: 0; margin: 12px 16px 24px; padding: 22px 18px; display: block; }
-    .lateral { border-left: 0; padding-left: 0; }
-    h1 { font-size: calc(26pt * var(--k)); white-space: normal; }
-    .item-cab { flex-direction: column; gap: 0; }
+    body:not(.web) .hoja { width: auto; min-height: 0; margin: 12px 16px 24px; padding: 22px 18px; display: block; }
+    body:not(.web) .lateral { border-left: 0; padding-left: 0; }
+    body:not(.web) h1 { font-size: calc(26pt * var(--k)); white-space: normal; }
+    body:not(.web) .item-cab { flex-direction: column; gap: 0; }
   }
 
-  /* ---------- MODO WEB (solo en pantalla; el PDF/A4 y el editor no cambian) ---------- */
+  /* ---------- VISTA WEB: la misma hoja A4 que en el editor, con esquinas redondeadas ---------- */
   @media screen {
-    body.web { --k: calc(var(--k0, 1) * 1.38); --lh: 1.55; }
-    body.web .barra { position: sticky; top: 0; z-index: 30; padding: 10px 16px; background: rgba(235,232,224,.85);
-      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(32,32,128,.06); }
-    body.web .barra button { min-height: 40px; }
-    body.web .hoja { width: auto; max-width: 1080px; min-height: 0; margin: 28px auto 48px; padding: 56px 60px;
-      border-radius: 18px; grid-template-columns: minmax(0, 1fr) 330px; column-gap: 44px; }
-    body.web .lateral { padding-left: 36px; }
-    body.web h1 { white-space: normal; letter-spacing: -1.5px; }
-    body.web .principal h2 { margin-top: 36px; }
-    body.web .lateral > section + section { margin-top: 26px; }
-    body.web .qr-final { margin-top: 26px; padding-top: 18px; }
-    body.web .qr-final svg { width: 96px; }
-    body.web .item { padding-bottom: 20px; padding-left: 24px; }
-    body.web .item::after { width: 11px; height: 11px; top: .45em; }
-    body.web .item::before { top: calc(.45em + 6px); bottom: calc(-.45em - 6px); left: 5px; }
-    body.web .contacto li { margin-bottom: 9px; }
-    body.web .ico { width: 18px; height: 18px; }
-    body.web a:hover span, body.web .item a.link:hover { text-decoration: underline; text-underline-offset: 3px; color: var(--azul); }
-    body.web .chips { gap: 6px; }
-    body.web .lateral .chips li, body.web .chips li { padding: 3px 9px; }
-    body.web .barra-nivel { height: 6px; }
-    body.web .pie { display: block; text-align: center; color: var(--suave); font-size: 13px; padding: 0 16px 32px; }
-    body.web.ats .pie { display: none; }
-
-    /* tablet */
-    @media (max-width: 1000px) {
-      body.web .hoja { margin: 20px 16px 36px; padding: 40px 36px; grid-template-columns: minmax(0, 1fr) 280px; column-gap: 32px; }
-      body.web .lateral { padding-left: 28px; }
-    }
-    /* móvil: una columna, con el contacto justo después de la presentación */
-    @media (max-width: 820px) {
-      body.web { --k: calc(var(--k0, 1) * 1.3); }
-      body.web .hoja { display: flex; flex-direction: column; margin: 12px 12px 28px; padding: 28px 20px; border-radius: 14px; }
-      body.web .principal, body.web .lateral { display: contents; }
-      body.web .principal > header { order: -2; }
-      body.web .sec-contacto { order: -1; margin-top: 22px !important; }
-      body.web .lateral > section { margin-top: 30px; }
-      body.web .principal h2 { margin-top: 30px; }
-      body.web .qr-final { order: 99; }
-      body.web .item-cab { flex-direction: column; gap: 0; }
-      body.web .item { padding-bottom: 16px; }
-      body.web .contacto li { margin-bottom: 0; min-height: 36px; }
-      body.web .barra { padding: 8px 12px; }
-      body.web .barra button { flex: 1 1 0; padding: 8px 10px; }
-      body.web h1 { font-size: calc(21pt * var(--k)); letter-spacing: -1px; }
-    }
+    body.web .hoja { border-radius: 14px; }
+    body.web .pie { display: block; text-align: center; color: var(--suave); font-size: 12px; padding: 0 16px 28px; }
   }
   .pie { display: none; }
 
@@ -308,6 +264,8 @@
     body:not(.ats) { width: 210mm; height: 297mm; overflow: hidden; }
     body.editando .hoja { margin: 0 !important; }
     .marca-soltar, .asa-esp, .chip-mas, .chip-x, noscript { display: none !important; }
+    .hoja { zoom: 1 !important; border-radius: 0 !important; }
+    .pie { display: none !important; }
     body.ats .hoja { padding: 7mm 13mm 5mm; }
   }
 </style>
@@ -527,6 +485,7 @@
   function alternarATS() {
     const on = document.body.classList.toggle("ats");
     document.body.classList.toggle("web", !on && !document.body.classList.contains("editando"));
+    if (typeof ajustarHoja === "function") ajustarHoja();
     document.getElementById("btn-ats").textContent = on ? "Ver versión visual" : "Ver versión ATS";
     try { history.replaceState(null, "", on ? "?ats" : location.pathname); } catch (e) {}
   }
@@ -536,6 +495,17 @@
   const _q = new URLSearchParams(location.search);
   if (!_q.has("editar") && !_q.has("ats")) document.body.classList.add("web");
   document.getElementById("anio").textContent = new Date().getFullYear();
+  // En pantallas más estrechas que el A4, la hoja se reduce entera (se ve igual que en el editor)
+  function ajustarHoja() {
+    const h = document.getElementById("cv");
+    h.style.zoom = "";
+    if (!document.body.classList.contains("web")) return;
+    const z = Math.min(1, (document.documentElement.clientWidth - 16) / h.offsetWidth);
+    if (z < 1) h.style.zoom = z.toFixed(4);
+  }
+  ajustarHoja();
+  addEventListener("resize", ajustarHoja);
+  document.fonts?.ready.then(ajustarHoja);
   if (new URLSearchParams(location.search).has("ats")) alternarATS();
 
   /* ---- Modo edición: lo usa editor.html (?editar) ---- */
