@@ -6,6 +6,8 @@
 <title>Editor de CV · JM</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="icon" href="logo-192.png" type="image/png" sizes="192x192">
 <style>html.enmarcado body { display: none !important; }</style>
 <script>
   // Seguridad: el editor no puede abrirse dentro de otra página (evita que te engañen para pulsar "Publicar")
@@ -26,7 +28,7 @@
   /* ---------- barra superior ---------- */
   .top { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--indigo); color: #fff; flex-wrap: wrap; }
   .marca { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .02em; margin-right: auto; }
-  .marca svg { width: 28px; height: 26px; }
+  .marca img { width: 30px; height: 30px; display: block; }
   .marca small { font-weight: 400; opacity: .7; }
   .top button { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); color: #fff; padding: 7px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
   .top button:hover { background: rgba(255,255,255,.2); }
@@ -130,7 +132,7 @@
 
 <header class="top">
   <div class="marca">
-    <svg viewBox="0 0 512 470" aria-hidden="true"><path fill="#FF4064" d="M176.4 0C141.9 0 109.8 18.5 92.6 48.4L13 186.3c-17.3 30-17.3 66.9 0 96.9l79.6 137.8c17.3 30 49.3 48.4 83.8 48.4h159.2c34.6 0 66.6-18.5 83.9-48.4L499 283.1c17.3-30 17.3-66.9 0-96.9L419.4 48.4C402.2 18.4 370.2 0 335.6 0z"/><text x="256" y="300" font-size="210" font-weight="800" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif">JM</text></svg>
+    <img src="logo.svg" alt="" aria-hidden="true">
     Editor de CV <small>· edita, arrastra y ajusta</small>
   </div>
   <button id="deshacer" title="Deshacer (Ctrl+Z)">↶ Deshacer</button>
