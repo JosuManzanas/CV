@@ -157,11 +157,28 @@
   .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(30px); background: var(--indigo); color: #fff; padding: 10px 16px; border-radius: 10px; opacity: 0; pointer-events: none; transition: .25s; box-shadow: 0 6px 24px rgba(0,0,40,.25); font-size: 13.5px; max-width: 90vw; }
   .toast.ver { opacity: 1; transform: translateX(-50%); }
 
+  .pestanas { display: none; }
   @media (max-width: 900px) {
-    body { overflow: auto; height: auto; display: block; }
+    body { overflow: auto; height: auto; display: block; padding-bottom: 68px; }
+    .top { position: sticky; top: 0; z-index: 20; flex-wrap: nowrap; gap: 6px; padding: 8px 10px; overflow-x: auto; scrollbar-width: none; }
+    .top::-webkit-scrollbar { display: none; }
+    .top .txt, .marca small, .marca > span, .sep, .top #pdf { display: none !important; }
+    .marca { margin-right: auto; flex: none; font-size: 15px; gap: 8px; }
+    .marca img { width: 26px; height: 26px; }
+    .top button { padding: 7px 10px; min-height: 38px; font-size: 15px; flex: none; }
     .zona { display: block; }
-    .panel { border-right: 0; overflow: visible; }
-    .lienzo { overflow: hidden; }
+    .panel { border-right: 0; overflow: visible; padding-bottom: 20px; }
+    .lienzo { overflow: hidden; padding: 12px 8px 20px; }
+    .pista { display: none; }
+    /* Una pestaña cada vez: formularios o el CV */
+    body:not(.ver-cv) .lienzo { display: none; }
+    body.ver-cv .panel { display: none; }
+    .pestanas { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; gap: 8px; padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+      background: rgba(255,255,255,.96); border-top: 1px solid var(--linea); box-shadow: 0 -4px 18px rgba(20,20,60,.08); }
+    .pestanas button { flex: 1; min-height: 44px; border-radius: 12px; border: 1.5px solid var(--linea); background: #fff; font-weight: 700; color: var(--indigo); font-size: 15px; }
+    .pestanas button.on { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+    .pestanas .pdf-movil { flex: .8; background: var(--coral); border-color: var(--coral); color: #fff; }
+    .toast { bottom: 80px; }
   }
 </style>
 </head>
@@ -173,18 +190,23 @@
     <span class="solo-propio">Editor de CV <small>· edita, arrastra y ajusta</small></span>
     <span class="solo-publico">JM-CV Editor <small>· crea tu CV gratis</small></span>
   </div>
-  <button id="deshacer" title="Deshacer (Ctrl+Z)">↶ Deshacer</button>
-  <button id="rehacer" title="Rehacer (Ctrl+Y)">↷ Rehacer</button>
+  <button id="deshacer" title="Deshacer (Ctrl+Z)" aria-label="Deshacer">↶<span class="txt"> Deshacer</span></button>
+  <button id="rehacer" title="Rehacer (Ctrl+Y)" aria-label="Rehacer">↷<span class="txt"> Rehacer</span></button>
   <span class="sep"></span>
-  <button id="ats" title="Ver cómo queda la versión de una columna para filtros ATS">Versión ATS</button>
-  <button id="nuevo" class="solo-publico" title="Empezar otro CV: en blanco, desde un ejemplo o desde un archivo">+ Nuevo / Ejemplos</button>
-  <button id="abrir" title="Abrir un archivo de datos guardado antes">📂 Abrir…</button>
-  <button id="guardar" title="Descargar tus datos para seguir editando otro día (Ctrl+S)"><span class="solo-propio">💾 Guardar</span><span class="solo-publico">💾 Guardar mis datos</span></button>
-  <button id="pdf" class="guardar">⬇ Descargar PDF</button>
-  <button id="publicar" class="publicar solo-propio" title="Publicar los cambios en tu web (GitHub Pages)">☁️ Publicar</button>
+  <button id="ats" title="Ver cómo queda la versión de una columna para filtros ATS"><span class="txt">Versión </span>ATS</button>
+  <button id="nuevo" class="solo-publico" title="Empezar otro CV: en blanco, desde un ejemplo o desde un archivo" aria-label="Nuevo o ejemplos">+<span class="txt"> Nuevo / Ejemplos</span></button>
+  <button id="abrir" title="Abrir un archivo de datos guardado antes" aria-label="Abrir">📂<span class="txt"> Abrir…</span></button>
+  <button id="guardar" title="Descargar tus datos para seguir editando otro día (Ctrl+S)" aria-label="Guardar">💾<span class="txt"><span class="solo-propio"> Guardar</span><span class="solo-publico"> Guardar mis datos</span></span></button>
+  <button id="pdf" class="guardar">⬇<span class="txt"> Descargar</span> PDF</button>
+  <button id="publicar" class="publicar solo-propio" title="Publicar los cambios en tu web (GitHub Pages)" aria-label="Publicar">☁️<span class="txt"> Publicar</span></button>
   <button id="ajustes-gh" class="solo-propio" title="Configurar la conexión con GitHub">⚙︎</button>
 </header>
 
+<nav class="pestanas" aria-label="Vista">
+  <button type="button" data-pestana="editar" class="on">✏️ Editar</button>
+  <button type="button" data-pestana="ver">👁 Ver CV</button>
+  <button type="button" class="pdf-movil">⬇ PDF</button>
+</nav>
 <div class="zona">
   <aside class="panel" id="panel">
     <p class="privacidad solo-publico">🔒 Tu CV se guarda <b>solo en este navegador</b>: no se sube a ningún servidor. Para seguir en otro ordenador, usa <b>💾 Guardar mis datos</b> y luego <b>📂 Abrir…</b></p>
@@ -338,6 +360,7 @@ window.addEventListener("message", e => {
     ((cv.estilo ??= {}).secciones ??= {})[m.id] = { ...(cv.estilo.secciones[m.id] || {}), arriba: m.arriba };
     return cambio({ refrescarPanel: true });
   }
+  if ((m.tipo === "verSeccion" || m.tipo === "verQR") && esMovil()) pestana("editar");
   if (m.tipo === "verSeccion") {
     abiertos.add("sec-dis"); abiertos.add("dis-" + m.id); construirPanel();
     if (!rutaValida(m.id)) return;
@@ -374,13 +397,26 @@ window.addEventListener("message", e => {
   }
 });
 function ajustarZoom() {
-  const disp = $("#lienzo").clientWidth - 32;
-  const z = Math.min(1, disp / 860);
+  const l = $("#lienzo"); if (!l.clientWidth) return;   // pestaña oculta en el móvil
+  const cs = getComputedStyle(l), disp = l.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const z = Math.min(1, disp / 860), h = vista.offsetHeight;
   const marco = $("#marco");
-  marco.style.transform = `scale(${z})`;
-  marco.style.height = vista.offsetHeight * z + "px";
-  marco.style.width = 860 * z + "px";
+  // El marco mide 860 px y se reduce con transform; los márgenes negativos quitan el hueco que deja la reducción
+  Object.assign(marco.style, { width: "860px", height: h + "px", transformOrigin: "top left", transform: `scale(${z})`,
+    marginRight: -(860 * (1 - z)) + "px", marginBottom: -(h * (1 - z)) + "px" });
 }
+// Móvil: pestañas Editar / Ver CV
+const esMovil = () => matchMedia("(max-width: 900px)").matches;
+function pestana(cual) {
+  document.body.classList.toggle("ver-cv", cual === "ver");
+  document.querySelectorAll("[data-pestana]").forEach(b => b.classList.toggle("on", b.dataset.pestana === cual));
+  if (cual === "ver") requestAnimationFrame(ajustarZoom);
+  scrollTo(0, 0);
+}
+document.querySelector(".pestanas").addEventListener("click", e => {
+  const b = e.target.closest("[data-pestana]"); if (b) pestana(b.dataset.pestana);
+  if (e.target.closest(".pdf-movil")) $("#pdf").click();
+});
 window.addEventListener("resize", ajustarZoom);
 
 /* ======================= Panel ======================= */
