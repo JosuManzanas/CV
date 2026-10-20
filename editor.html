@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor de CV · JM</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  @font-face { font-family: "Adwaita Sans JM"; src: url("fuentes/AdwaitaSans-Regular.ttf") format("truetype"); font-weight: 100 900; }
+  :root {
+    --indigo: #202080; --coral: #FF4064; --oro: #D3BC5F; --papel: #FAF8F4;
+    --texto: #23233a; --suave: #6a6a88; --linea: #e2e0ea; --panel: #ffffff; --fondo: #ebe8e0;
+    --f: "Adwaita Sans JM", "Adwaita Sans", Inter, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body { font: 14px/1.4 var(--f); color: var(--texto); background: var(--fondo); display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+
+  /* ---------- barra superior ---------- */
+  .top { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--indigo); color: #fff; flex-wrap: wrap; }
+  .marca { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .02em; margin-right: auto; }
+  .marca svg { width: 28px; height: 26px; }
+  .marca small { font-weight: 400; opacity: .7; }
+  .top button { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); color: #fff; padding: 7px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+  .top button:hover { background: rgba(255,255,255,.2); }
+  .top button:disabled { opacity: .35; cursor: default; }
+  .top button.on { background: var(--oro); border-color: var(--oro); color: var(--indigo); font-weight: 700; }
+  .top .guardar { background: var(--coral); border-color: var(--coral); font-weight: 700; }
+  .top .guardar:hover { background: #ff5c7b; }
+  .sep { width: 1px; height: 24px; background: rgba(255,255,255,.2); margin: 0 4px; }
+
+  /* ---------- zona de trabajo ---------- */
+  .zona { display: grid; grid-template-columns: 390px 1fr; min-height: 0; }
+  .panel { background: var(--panel); border-right: 1px solid var(--linea); overflow-y: auto; padding: 12px 14px 60px; }
+  .lienzo { overflow: auto; position: relative; display: flex; flex-direction: column; align-items: center; padding: 18px 16px 40px; }
+  .marco { transform-origin: top center; }
+  .marco iframe { border: 0; width: 860px; height: 1200px; display: block; background: transparent; }
+  .aviso { position: sticky; top: 0; z-index: 2; margin-bottom: 10px; padding: 8px 14px; border-radius: 8px; font-size: 13px; background: #ffe2e8; color: #9a1031; border: 1px solid #ffb3c2; display: none; }
+  .aviso.ver { display: block; }
+  #soluciones:empty { display: none; }
+  #soluciones { margin-top: 8px; display: grid; gap: 5px; }
+  #soluciones .sol { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #ffd0da; border-radius: 8px; padding: 6px 8px; color: var(--texto); }
+  #soluciones .sol span { flex: 1; }
+  #soluciones .sol button { margin: 0; background: var(--indigo); color: #fff; border-color: var(--indigo); font-weight: 600; }
+  #soluciones .nota { color: #9a1031; font-size: 12.5px; }
+  .aviso .sol-btn { background: var(--coral) !important; color: #fff !important; border-color: var(--coral) !important; font-weight: 700; }
+  .aviso button { margin-left: 6px; border: 1px solid #ffb3c2; background: #fff; color: #9a1031; border-radius: 6px; padding: 2px 8px; font-size: 12px; cursor: pointer; }
+  .pista { font-size: 12.5px; color: var(--suave); margin-bottom: 10px; text-align: center; }
+
+  /* ---------- panel ---------- */
+  .borrador { background: #f6f0d9; border: 1px solid var(--oro); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 13px; display: none; }
+  .borrador.ver { display: block; }
+  .borrador div { display: flex; gap: 6px; margin-top: 8px; }
+  details.sec { border: 1px solid var(--linea); border-radius: 12px; margin-bottom: 10px; background: #fff; }
+  details.sec > summary { list-style: none; cursor: pointer; padding: 11px 14px; font-weight: 700; color: var(--indigo); display: flex; align-items: center; gap: 8px; }
+  details.sec > summary::-webkit-details-marker { display: none; }
+  details.sec > summary::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--oro)); }
+  details.sec > summary::after { content: "▾"; margin-left: auto; color: var(--suave); transition: transform .15s; }
+  details.sec:not([open]) > summary::after { transform: rotate(-90deg); }
+  .cuerpo { padding: 2px 14px 14px; display: grid; gap: 10px; }
+  label.campo { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--suave); }
+  label.campo .ayuda { font-weight: 400; font-size: 11.5px; }
+  input[type=text], textarea { width: 100%; border: 1px solid var(--linea); border-radius: 8px; padding: 7px 9px; background: var(--papel); font-size: 13.5px; color: var(--texto); font-weight: 400; }
+  textarea { resize: vertical; min-height: 64px; line-height: 1.4; }
+  input[type=text]:focus, textarea:focus { outline: 2px solid var(--indigo); outline-offset: -1px; background: #fff; }
+  .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tarjeta { border: 1px solid var(--linea); border-radius: 10px; background: #fcfbf8; }
+  .tarjeta > summary { list-style: none; cursor: pointer; padding: 8px 10px; display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13.5px; }
+  .tarjeta > summary::-webkit-details-marker { display: none; }
+  .tarjeta > summary .t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tarjeta .cuerpo { padding: 4px 10px 10px; }
+  .mini { border: 1px solid var(--linea); background: #fff; border-radius: 6px; width: 28px; height: 26px; cursor: pointer; display: inline-grid; place-items: center; font-size: 13px; color: var(--suave); }
+  .mini:hover { border-color: var(--indigo); color: var(--indigo); }
+  .mini.borrar:hover { border-color: var(--coral); color: var(--coral); }
+  .anadir { border: 1.5px dashed var(--linea); background: none; border-radius: 10px; padding: 8px; cursor: pointer; color: var(--indigo); font-weight: 600; }
+  .anadir:hover { border-color: var(--indigo); background: #f4f4fb; }
+  .swatches { display: flex; gap: 6px; }
+  .swatches button { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--linea); cursor: pointer; }
+  .swatches button.sel { box-shadow: 0 0 0 2px var(--indigo); }
+  .colores { display: grid; gap: 8px; }
+  .colores label { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .colores input[type=color] { width: 42px; height: 30px; border: 1px solid var(--linea); border-radius: 6px; padding: 2px; background: #fff; cursor: pointer; }
+  .rango { display: flex; align-items: center; gap: 8px; }
+  .rango input { flex: 1; accent-color: var(--indigo); }
+  .subt { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--indigo); margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--linea); }
+  .subt:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+  .segm { display: flex; flex-wrap: wrap; gap: 4px; }
+  .segm button { border: 1px solid var(--linea); background: #fff; border-radius: 7px; padding: 5px 9px; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-weight: 500; color: var(--texto); }
+  .segm button i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .segm button.sel { border-color: var(--indigo); background: #ececf6; color: var(--indigo); font-weight: 700; }
+  .boton2 { border: 1px solid var(--linea); background: #fff; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+  .boton2:hover { border-color: var(--indigo); }
+
+  /* ---------- publicar en GitHub ---------- */
+  .top .publicar { background: #fff; border-color: #fff; color: var(--indigo); font-weight: 700; }
+  .top .publicar:hover { background: #f1f1fb; }
+  dialog#gh { margin: auto; border: 0; border-radius: 14px; padding: 0; width: min(460px, calc(100vw - 32px)); box-shadow: 0 18px 60px rgba(20,20,60,.3); color: var(--texto); }
+  dialog#gh::backdrop { background: rgba(20,20,50,.45); }
+  dialog#gh form { display: grid; gap: 12px; padding: 20px 22px; }
+  dialog#gh h3 { color: var(--indigo); font-size: 17px; }
+  dialog#gh p, dialog#gh li { font-size: 12.5px; color: var(--suave); line-height: 1.45; }
+  dialog#gh ol { padding-left: 18px; display: grid; gap: 2px; }
+  dialog#gh a { color: var(--indigo); }
+  dialog#gh input[type=password] { width: 100%; border: 1px solid var(--linea); border-radius: 8px; padding: 7px 9px; background: var(--papel); font-size: 13.5px; }
+  dialog#gh .check { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  dialog#gh .botones { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+  dialog#gh .botones button { border-radius: 8px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--linea); background: #fff; }
+  dialog#gh .botones .ok { background: var(--indigo); border-color: var(--indigo); color: #fff; font-weight: 700; }
+  dialog#gh .olvidar { margin-right: auto; color: var(--coral) !important; border-color: transparent !important; }
+
+  .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(30px); background: var(--indigo); color: #fff; padding: 10px 16px; border-radius: 10px; opacity: 0; pointer-events: none; transition: .25s; box-shadow: 0 6px 24px rgba(0,0,40,.25); font-size: 13.5px; max-width: 90vw; }
+  .toast.ver { opacity: 1; transform: translateX(-50%); }
+
+  @media (max-width: 900px) {
+    body { overflow: auto; height: auto; display: block; }
+    .zona { display: block; }
+    .panel { border-right: 0; overflow: visible; }
+    .lienzo { overflow: hidden; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="marca">
+    <svg viewBox="0 0 512 470" aria-hidden="true"><path fill="#FF4064" d="M176.4 0C141.9 0 109.8 18.5 92.6 48.4L13 186.3c-17.3 30-17.3 66.9 0 96.9l79.6 137.8c17.3 30 49.3 48.4 83.8 48.4h159.2c34.6 0 66.6-18.5 83.9-48.4L499 283.1c17.3-30 17.3-66.9 0-96.9L419.4 48.4C402.2 18.4 370.2 0 335.6 0z"/><text x="256" y="300" font-size="210" font-weight="800" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif">JM</text></svg>
+    Editor de CV <small>· edita, arrastra y ajusta</small>
+  </div>
+  <button id="deshacer" title="Deshacer (Ctrl+Z)">↶ Deshacer</button>
+  <button id="rehacer" title="Rehacer (Ctrl+Y)">↷ Rehacer</button>
+  <span class="sep"></span>
+  <button id="ats" title="Ver cómo queda la versión de una columna para filtros ATS">Versión ATS</button>
+  <button id="abrir" title="Cargar otro datos.js">Abrir…</button>
+  <button id="pdf">Descargar PDF</button>
+  <button id="guardar" class="guardar" title="Guardar una copia en este ordenador (Ctrl+S)">💾 Guardar</button>
+  <button id="publicar" class="publicar" title="Publicar los cambios en tu web (GitHub Pages)">☁️ Publicar</button>
+  <button id="ajustes-gh" title="Configurar la conexión con GitHub">⚙︎</button>
+</header>
+
+<div class="zona">
+  <aside class="panel" id="panel">
+    <div class="borrador" id="borrador">
+      Tienes cambios sin guardar de una sesión anterior.
+      <div><button class="boton2" id="recuperar">Recuperar</button><button class="boton2" id="descartar">Descartar</button></div>
+    </div>
+    <div id="secciones"></div>
+  </aside>
+
+  <main class="lienzo" id="lienzo">
+    <div class="aviso" id="aviso">⚠️ <span id="aviso-texto"></span> <button type="button" id="verA4">Ver dónde</button><button type="button" id="buscarSol" class="sol-btn">💡 Soluciones</button>
+      <div id="soluciones"></div></div>
+    <p class="pista">Haz clic en un texto para editarlo · <b>arrastra</b> secciones, experiencias, tareas, chips o cursos para moverlos · tamaños y espacios en <b>Diseño de página</b>.</p>
+    <div class="marco" id="marco"><iframe id="vista" src="index.html?editar" title="Vista previa del CV"></iframe></div>
+  </main>
+</div>
+
+<iframe id="medidor" src="index.html?editar&medir" title="" aria-hidden="true" tabindex="-1"
+  style="position:absolute;left:-10000px;top:0;width:860px;height:1300px;border:0;pointer-events:none"></iframe>
+<dialog id="gh">
+  <form method="dialog">
+    <h3>☁️ Publicar en tu web (GitHub)</h3>
+    <p>El editor guarda los cambios directamente en el <code>datos.js</code> de tu repositorio y la web se actualiza en 1–2 minutos.</p>
+    <label class="campo">Repositorio <span class="ayuda">usuario/repositorio, p. ej. <code>josumanzanas/josumanzanas.github.io</code></span>
+      <input type="text" id="gh-repo" required placeholder="usuario/repositorio" autocomplete="off" spellcheck="false"></label>
+    <div class="fila">
+      <label class="campo">Rama <input type="text" id="gh-rama" placeholder="main" spellcheck="false"></label>
+      <label class="campo">Archivo <input type="text" id="gh-ruta" placeholder="datos.js" spellcheck="false"></label>
+    </div>
+    <label class="campo">Token de acceso
+      <input type="password" id="gh-token" required autocomplete="off" spellcheck="false"></label>
+    <ol>
+      <li>Abre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → Fine-grained tokens → Generate new token</a>.</li>
+      <li><b>Repository access:</b> <i>Only select repositories</i> → solo el de tu web.</li>
+      <li><b>Permissions → Contents:</b> <i>Read and write</i>. Nada más.</li>
+      <li>Copia el token y pégalo aquí. Nunca lo compartas.</li>
+    </ol>
+    <label class="check"><input type="checkbox" id="gh-recordar"> Recordar el token en este navegador (solo en tu ordenador personal)</label>
+    <div class="botones">
+      <button type="button" class="olvidar" id="gh-olvidar">Olvidar</button>
+      <button value="cancelar" formnovalidate>Cancelar</button>
+      <button value="ok" class="ok">Guardar y publicar</button>
+    </div>
+  </form>
+</dialog>
+<input type="file" id="fichero" accept=".js,text/javascript" hidden>
+<div class="toast" id="toast"></div>
+
+<script src="datos.js"></script>
+<script>
+/* ======================= Estado ======================= */
+const CLAVE = "cv-jm-borrador";
+let cv = structuredClone(window.CV || {});
+let historia = [JSON.stringify(cv)], pos = 0, tGuardarHist = null;
+let sucio = false, handle = null, modoATS = false;
+const abiertos = new Set(["sec-cabecera"]);
+const $ = s => document.querySelector(s);
+const vista = $("#vista");
+
+const obtener = (p, o = cv) => p.split(".").reduce((a, k) => (a == null ? a : a[k]), o);
+function fijar(p, v) {
+  const ks = p.split("."), ult = ks.pop();
+  const obj = ks.reduce((a, k) => (a[k] ??= {}), cv);
+  obj[ult] = v;
+}
+
+function cambio({ refrescarPanel = false, foco } = {}) {
+  sucio = true;
+  const sc = document.getElementById("soluciones"); if (sc) sc.innerHTML = "";
+  enviar(foco);
+  if (refrescarPanel) construirPanel();
+  clearTimeout(tGuardarHist);
+  tGuardarHist = setTimeout(apuntarHistoria, 400);
+  try { localStorage.setItem(CLAVE, JSON.stringify({ cv, fecha: Date.now() })); } catch (e) {}
+}
+function apuntarHistoria() {
+  const s = JSON.stringify(cv);
+  if (s === historia[pos]) return;
+  historia = historia.slice(0, pos + 1); historia.push(s); pos = historia.length - 1;
+  if (historia.length > 200) { historia.shift(); pos--; }
+  botonesHist();
+}
+function irHistoria(d) {
+  clearTimeout(tGuardarHist); apuntarHistoria();
+  const n = pos + d; if (n < 0 || n >= historia.length) return;
+  pos = n; cv = JSON.parse(historia[pos]); sucio = true;
+  enviar(); construirPanel(); botonesHist();
+  try { localStorage.setItem(CLAVE, JSON.stringify({ cv, fecha: Date.now() })); } catch (e) {}
+}
+function botonesHist() { $("#deshacer").disabled = pos <= 0; $("#rehacer").disabled = pos >= historia.length - 1; }
+
+/* ======================= Vista previa ======================= */
+function enviar(foco) { vista.contentWindow?.postMessage({ tipo: "cv", cv: structuredClone(cv), foco }, "*"); }
+const medidor = document.getElementById("medidor");
+let esperaMedida = null, idMedida = 0;
+window.addEventListener("message", e => {
+  const m = e.data || {};
+  if (e.source === medidor.contentWindow) { if (m.tipo === "altura" && esperaMedida && m.id === idMedida) { const r = esperaMedida; esperaMedida = null; r(m.columnas || []); } return; }
+  if (m.tipo === "listo") { enviar(); vista.contentWindow.postMessage({ tipo: "ats", on: modoATS }, "*"); }
+  if (m.tipo === "altura") {
+    vista.style.height = Math.max(m.h, 1150) + "px"; ajustarZoom();
+    lineaY = m.lineaY;
+    $("#aviso").classList.toggle("ver", !!m.desborda);
+    if (m.desborda) $("#aviso-texto").innerHTML = "No cabe en un A4: " + m.columnas.map(c => `la <b>columna ${c.columna}</b> se pasa <b>${c.px} px</b>`).join(" y ") +
+      ". Lo que no cabe está <b style='color:#d42a52'>marcado en rojo</b> en el CV, debajo de la línea «Fin del A4».";
+  }
+  if (m.tipo === "mover") {
+    const lista = obtener(m.grupo);
+    if (!Array.isArray(lista)) return;
+    const [x] = lista.splice(m.de, 1); lista.splice(m.a, 0, x);
+    return cambio({ refrescarPanel: true });
+  }
+  if (m.tipo === "espacio") {
+    ((cv.estilo ??= {}).secciones ??= {})[m.id] = { ...(cv.estilo.secciones[m.id] || {}), arriba: m.arriba };
+    return cambio({ refrescarPanel: true });
+  }
+  if (m.tipo === "verSeccion") {
+    abiertos.add("sec-dis"); abiertos.add("dis-" + m.id); construirPanel();
+    document.querySelector(`[data-k="dis-${m.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  if (m.tipo === "verQR") {
+    abiertos.add("sec-contacto"); construirPanel();
+    [...document.querySelectorAll('[data-k="sec-contacto"] .subt')].find(d => d.textContent === "Código QR")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  if (m.tipo === "orden") { (cv.estilo ??= {}).orden = m.orden; return cambio({ refrescarPanel: true }); }
+  if (m.tipo === "anadir") {
+    const arr = obtener(m.p) || (fijar(m.p, []), obtener(m.p));
+    arr.push("Nueva");
+    return cambio({ refrescarPanel: true, foco: `${m.p}.${arr.length - 1}` });
+  }
+  if (m.tipo === "borrar") {
+    const ks = m.p.split("."), i = +ks.pop(), arr = obtener(ks.join("."));
+    if (Array.isArray(arr) && i < arr.length) { arr.splice(i, 1); cambio({ refrescarPanel: true }); }
+    return;
+  }
+  if (m.tipo === "editar") {
+    fijar(m.p, m.valor);
+    sincronizarCampo(m.p);
+    sucio = true;
+    clearTimeout(tGuardarHist); tGuardarHist = setTimeout(apuntarHistoria, 400);
+    try { localStorage.setItem(CLAVE, JSON.stringify({ cv, fecha: Date.now() })); } catch (err) {}
+  }
+});
+function ajustarZoom() {
+  const disp = $("#lienzo").clientWidth - 32;
+  const z = Math.min(1, disp / 860);
+  const marco = $("#marco");
+  marco.style.transform = `scale(${z})`;
+  marco.style.height = vista.offsetHeight * z + "px";
+  marco.style.width = 860 * z + "px";
+}
+window.addEventListener("resize", ajustarZoom);
+
+/* ======================= Panel ======================= */
+const COLORES = { oro: "#D3BC5F", coral: "#FF4064", azul: "#202080" };
+const ESQUEMAS = {
+  experiencia: { titulo: "puesto", nuevo: () => ({ puesto: "Nuevo puesto", empresa: "Empresa", lugar: "Ciudad", fechas: "mes año – mes año", color: "azul", puntos: ["Describe una tarea o logro."] }),
+    campos: [["puesto", "Puesto"], ["fechas", "Fechas"], ["empresa", "Empresa"], ["lugar", "Lugar"], ["color", "Color del punto", "color"], ["puntos", "Tareas y logros", "lineas", "Una por línea"]] },
+  proyectos: { titulo: "nombre", nuevo: () => ({ nombre: "Nuevo proyecto", fecha: "", color: "azul", descripcion: "Qué hace y para qué sirve.", etiquetas: ["Python"], enlace: "" }),
+    campos: [["nombre", "Nombre"], ["fecha", "Fecha"], ["color", "Color del punto", "color"], ["descripcion", "Descripción", "area"], ["etiquetas", "Etiquetas", "lineas", "Una por línea"], ["enlace", "Enlace (opcional)"]] },
+  formacion: { titulo: "titulo", nuevo: () => ({ titulo: "Centro o título", centro: "", fechas: "" }),
+    campos: [["titulo", "Título / centro"], ["centro", "Centro (opcional)"], ["fechas", "Fechas"]] },
+  idiomas: { titulo: "idioma", nuevo: () => ({ idioma: "Idioma", nivel: "Básico", porcentaje: 30 }),
+    campos: [["idioma", "Idioma"], ["nivel", "Nivel"], ["porcentaje", "Barra", "rango"]] }
+};
+
+const SECCIONES_CV = [["contacto", "Contacto"], ["experiencia", "Experiencia"], ["proyectos", "Proyectos"], ["creatividad", "Diseño y multimedia"],
+  ["competencias", "Competencias"], ["formacion", "Formación"], ["idiomas", "Idiomas"]];
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function campo(p, etiqueta, tipo = "texto", ayuda = "") {
+  const v = obtener(p);
+  const cab = `${esc(etiqueta)}${ayuda && typeof ayuda === "string" ? ` <span class="ayuda">· ${esc(ayuda)}</span>` : ""}`;
+  if (tipo === "area") return `<label class="campo">${cab}<textarea data-p="${p}" data-t="texto" rows="4">${esc(v)}</textarea></label>`;
+  if (tipo === "lineas") return `<label class="campo">${cab}<textarea data-p="${p}" data-t="lineas" rows="${Math.max(3, (v || []).length + 1)}">${esc((v || []).join("\n"))}</textarea></label>`;
+  if (tipo === "color") return `<div class="campo" style="display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--suave)">${cab}<div class="swatches">${
+    Object.entries(COLORES).map(([k, c]) => `<button type="button" title="${k}" data-color="${p}" data-v="${k}" class="${v === k ? "sel" : ""}" style="background:${c}"></button>`).join("")}</div></div>`;
+  if (tipo === "opciones") {
+    const [ops, def] = ayuda, val = v ?? def;
+    return `<div class="campo" style="display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--suave)">${esc(etiqueta)}<div class="segm">${
+      ops.map(([k, l, c]) => `<button type="button" data-opcion="${p}" data-v="${k}" class="${String(val) === String(k) ? "sel" : ""}">${c ? `<i style="background:${c}"></i>` : ""}${esc(l)}</button>`).join("")}</div></div>`;
+  }
+  if (tipo === "desliz") {
+    const [min, max, paso, def, fmt] = ayuda;
+    const val = v ?? def;
+    return `<label class="campo">${esc(etiqueta)}<div class="rango"><input type="range" min="${min}" max="${max}" step="${paso}" data-p="${p}" data-t="numero" data-fmt="${fmt}" value="${val}"><span>${formato(val, fmt)}</span></div></label>`;
+  }
+  if (tipo === "rango") return `<label class="campo">${cab}<div class="rango"><input type="range" min="0" max="100" step="5" data-p="${p}" data-t="numero" value="${v ?? 50}"><span>${v ?? 50}%</span></div></label>`;
+  return `<label class="campo">${cab}<input type="text" data-p="${p}" data-t="texto" value="${esc(v)}"></label>`;
+}
+
+function formato(v, f) {
+  v = +v;
+  if (f === "pct") return Math.round(v * 100) + "%";
+  if (f === "mm") return v + " mm";
+  if (f === "px") return (v > 0 ? "+" : "") + v + " px";
+  if (f === "lh") return v.toFixed(2);
+  return v + "%";
+}
+
+function seccion(id, titulo, color, html) {
+  return `<details class="sec" data-k="${id}" style="--c:${color}" ${abiertos.has(id) ? "open" : ""}><summary>${titulo}</summary><div class="cuerpo">${html}</div></details>`;
+}
+
+function lista(clave) {
+  const e = ESQUEMAS[clave];
+  const items = (cv[clave] || []).map((it, i) => {
+    const k = `${clave}-${i}`;
+    const filas = [];
+    const cs = e.campos;
+    for (let j = 0; j < cs.length; j++) {
+      const [f, et, t, ay] = cs[j];
+      const sig = cs[j + 1];
+      if ((!t) && sig && !sig[2] && !["descripcion"].includes(f)) { filas.push(`<div class="fila">${campo(`${clave}.${i}.${f}`, et)}${campo(`${clave}.${i}.${sig[0]}`, sig[1])}</div>`); j++; }
+      else filas.push(campo(`${clave}.${i}.${f}`, et, t, ay));
+    }
+    return `<details class="tarjeta" data-k="${k}" ${abiertos.has(k) ? "open" : ""}>
+      <summary><span class="t">${esc(it[e.titulo]) || "(sin título)"}</span>
+        <button type="button" class="mini" title="Subir" data-mover="${clave}" data-i="${i}" data-d="-1">↑</button>
+        <button type="button" class="mini" title="Bajar" data-mover="${clave}" data-i="${i}" data-d="1">↓</button>
+        <button type="button" class="mini borrar" title="Eliminar" data-borrar="${clave}" data-i="${i}">✕</button>
+      </summary><div class="cuerpo">${filas.join("")}</div></details>`;
+  }).join("");
+  return items + `<button type="button" class="anadir" data-anadir="${clave}">+ Añadir</button>`;
+}
+
+function construirPanel() {
+  const col = cv.colores || {};
+  $("#secciones").innerHTML = [
+    seccion("sec-cabecera", "Cabecera", "#202080",
+      `<div class="fila">${campo("nombre", "Nombre")}${campo("apellido2", "2º apellido")}</div>${campo("titular", "Titular")}${campo("perfil", "Perfil profesional", "area")}`),
+    seccion("sec-contacto", "Contacto", "#D3BC5F",
+      `${campo("contacto.email", "Email")}<div class="fila">${campo("contacto.telefono", "Teléfono")}${campo("contacto.ubicacion", "Ubicación")}</div>
+       ${campo("contacto.linkedin", "LinkedIn")}${campo("contacto.web", "Web")}${campo("contacto.github", "GitHub", "texto", "vacío = no se muestra")}
+       <div class="subt">Código QR</div>
+       ${campo("qr.mostrar", "Mostrar QR", "opciones", [[[true, "Sí"], [false, "No"]], true])}
+       ${campo("qr.tipo", "Al escanearlo", "opciones", [[["llamar", "📞 Llamar"], ["whatsapp", "💬 WhatsApp"], ["vcard", "👤 Guardar contacto"], ["enlace", "🔗 Abrir enlace"]], "llamar"])}
+       ${cv.qr?.tipo === "enlace" ? campo("qr.url", "Enlace del QR", "texto", "vacío = tu web") : ""}
+       ${cv.qr?.tipo === "vcard" ? `<p class="ayuda" style="font-size:12px;color:var(--suave)">Lleva nombre, teléfono y email: el QR es más denso. Úsalo con la posición "Arriba (grande)" y un tamaño de 22 mm o más.</p>` : ""}
+       ${campo("qr.posicion", "Posición", "opciones", [[["final", "Tarjeta al final"], ["contacto", "Dentro de Contacto"], ["cabecera", "Arriba (grande)"]], "final"])}
+       ${{ final: campo("estilo.qf", "Tamaño del QR", "desliz", [12, 26, 0.5, 15, "mm"]), contacto: campo("estilo.qr", "Tamaño del QR", "desliz", [12, 24, 0.5, 15, "mm"]), cabecera: campo("estilo.qc", "Tamaño del QR", "desliz", [16, 32, 0.5, 24, "mm"]) }[cv.qr?.posicion || "final"]}`),
+    seccion("sec-exp", "Experiencia", "#FF4064", lista("experiencia")),
+    seccion("sec-proy", "Proyectos", "#D3BC5F", lista("proyectos")),
+    seccion("sec-crea", "Diseño y multimedia", "#FF4064",
+      `${campo("creatividad.titulo", "Título de la sección")}${campo("creatividad.texto", "Frase (opcional)", "area", "vacío = sin frase")}${campo("creatividad.items", "Herramientas", "lineas", "una por línea · vacío = se oculta la sección")}`),
+    seccion("sec-comp", "Competencias", "#202080",
+      `${campo("competencias.tecnicas", "Técnicas", "lineas", "una por línea")}${campo("competencias.ia", "IA y agentes", "lineas", "una por línea · vacío = se oculta")}${campo("competencias.transversales", "Transversales", "lineas", "una por línea")}
+       ${campo("competencias.nociones", "Nota bajo técnicas", "texto", "vacío = se oculta")}`),
+    seccion("sec-form", "Formación y cursos", "#FF4064", lista("formacion") + campo("cursos", "Cursos complementarios", "lineas", "uno por línea")),
+    seccion("sec-idi", "Idiomas y otros", "#D3BC5F", lista("idiomas") + campo("otros", "Otros (carnets, acreditaciones…)", "lineas", "uno por línea")),
+    seccion("sec-dis", "Diseño de página", "#FF4064",
+      `<div class="subt">General</div>
+       ${campo("estilo.k", "Tamaño de letra", "desliz", [0.85, 1.15, 0.01, 1, "pct"])}
+       ${campo("estilo.lh", "Interlineado", "desliz", [1.2, 1.7, 0.01, 1.42, "lh"])}
+       ${campo("estilo.es", "Espacio entre secciones (todas)", "desliz", [0, 2.5, 0.05, 1, "pct"])}
+       ${campo("estilo.ei", "Espacio entre elementos (todas)", "desliz", [0, 2.5, 0.05, 1, "pct"])}
+       <div class="subt">Líneas</div>
+       ${campo("estilo.lineaTiempo", "Línea de tiempo (Experiencia, Proyectos)", "opciones", [[["oro", "Dorada"], ["color", "Color de cada punto"]], "oro"])}
+       ${campo("estilo.lineaSecciones", "Línea de los títulos", "opciones", [[["azul", "Índigo"], ["alterna", "Alterna colores"]], "azul"])}
+       ${campo("estilo.tituloColor", "Nombre de las secciones", "opciones", [[["", "Índigo"], ["linea", "Igual que su línea"], ["coral", "Coral", COLORES.coral], ["oro", "Dorado", COLORES.oro]], ""])}
+       <div class="subt">Márgenes de la hoja</div>
+       <div class="fila">${campo("estilo.mt", "Superior", "desliz", [4, 25, 0.5, 12, "mm"])}${campo("estilo.mb", "Inferior", "desliz", [4, 25, 0.5, 10, "mm"])}</div>
+       <div class="fila">${campo("estilo.ml", "Izquierdo", "desliz", [4, 25, 0.5, 13, "mm"])}${campo("estilo.mr", "Derecho", "desliz", [4, 25, 0.5, 11, "mm"])}</div>
+       <div class="fila">${campo("estilo.sc", "Separación columnas", "desliz", [6, 24, 0.5, 13, "mm"])}${campo("estilo.al", "Ancho col. derecha", "desliz", [55, 85, 1, 67, "mm"])}</div>
+       <div class="subt">Por sección</div>
+       <p class="ayuda" style="font-size:12px;color:var(--suave)">También puedes pasar el ratón por una sección del CV y arrastrar el tirador <b style="color:var(--coral)">↕</b>, o hacer clic en su título para abrirla aquí.</p>
+       ${SECCIONES_CV.map(([id, nombre]) => `<details class="tarjeta" data-k="dis-${id}" ${abiertos.has("dis-" + id) ? "open" : ""}>
+          <summary><span class="t">${esc(id === "creatividad" ? (cv.creatividad?.titulo || nombre) : nombre)}</span>${
+            (cv.estilo?.secciones?.[id]) ? `<button type="button" class="mini" title="Restablecer esta sección" data-reset-sec="${id}">↺</button>` : ""}</summary>
+          <div class="cuerpo">
+            ${campo(`estilo.secciones.${id}.colorTitulo`, "Color del nombre", "opciones", [[["", "Auto"], ["linea", "Como la línea"], ["azul", "Índigo", COLORES.azul], ["coral", "Coral", COLORES.coral], ["oro", "Dorado", COLORES.oro]], ""])}
+            ${campo(`estilo.secciones.${id}.color`, "Color de la línea del título", "opciones", [[["", "Auto"], ["azul", "Índigo", COLORES.azul], ["coral", "Coral", COLORES.coral], ["oro", "Dorado", COLORES.oro]], ""])}
+            ${campo(`estilo.secciones.${id}.arriba`, "Espacio encima", "desliz", [-12, 80, 1, 0, "px"])}
+            ${campo(`estilo.secciones.${id}.interno`, "Espacio interno", "desliz", [0, 3, 0.05, 1, "pct"])}
+          </div></details>`).join("")}
+       <div class="subt">Orden</div>
+       <p class="ayuda" style="font-size:12px;color:var(--suave)">Arrastra secciones, experiencias, tareas, chips o cursos directamente en el CV. Las secciones pueden cambiar de columna.</p>
+       <div style="display:flex;gap:6px;flex-wrap:wrap">
+         <button type="button" class="boton2" id="resetDis">Restablecer diseño</button>
+         <button type="button" class="boton2" id="resetOrden">Restablecer orden de secciones</button>
+       </div>`),
+    seccion("sec-col", "Colores", "#202080",
+      `<div class="colores">
+        <label><input type="color" data-col="azul" value="${col.azul || COLORES.azul}"> Principal (índigo)</label>
+        <label><input type="color" data-col="oro" value="${col.oro || COLORES.oro}"> Acento 1 (dorado)</label>
+        <label><input type="color" data-col="coral" value="${col.coral || COLORES.coral}"> Acento 2 (coral)</label>
+        <button type="button" class="boton2" id="resetCol">Restaurar colores JM</button>
+      </div>`)
+  ].join("");
+}
+
+function sincronizarCampo(p) {
+  const ks = p.split(".");
+  while (ks.length) {
+    const q = ks.join(".");
+    const el = document.querySelector(`#secciones [data-p="${CSS.escape(q)}"]`);
+    if (el) { if (document.activeElement !== el) el.value = el.dataset.t === "lineas" ? (obtener(q) || []).join("\n") : obtener(q) ?? ""; return; }
+    ks.pop();
+  }
+}
+
+/* ---- eventos del panel ---- */
+const sec = $("#secciones");
+sec.addEventListener("input", e => {
+  const el = e.target;
+  if (el.dataset.col) { (cv.colores ??= {})[el.dataset.col] = el.value; return cambio(); }
+  if (!el.dataset.p) return;
+  let v = el.value;
+  if (el.dataset.t === "lineas") v = v.split("\n").map(s => s.trim()).filter(Boolean);
+  if (el.dataset.t === "numero") { v = +v; el.nextElementSibling.textContent = formato(v, el.dataset.fmt); }
+  fijar(el.dataset.p, v);
+  const tit = el.closest(".tarjeta")?.querySelector(".t");
+  const [clave, i] = el.dataset.p.split(".");
+  if (tit && ESQUEMAS[clave] && el.dataset.p === `${clave}.${i}.${ESQUEMAS[clave].titulo}`) tit.textContent = v || "(sin título)";
+  cambio();
+});
+sec.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.opcion) { const v = b.dataset.v; fijar(b.dataset.opcion, v === "true" ? true : v === "false" ? false : v); return cambio({ refrescarPanel: true }); }
+  if (b.dataset.color) { fijar(b.dataset.color, b.dataset.v); return cambio({ refrescarPanel: true }); }
+  if (b.dataset.resetSec) { e.preventDefault(); delete cv.estilo.secciones[b.dataset.resetSec]; return cambio({ refrescarPanel: true }); }
+  if (b.id === "resetDis") { const o = cv.estilo?.orden; cv.estilo = o ? { orden: o } : {}; return cambio({ refrescarPanel: true }); }
+  if (b.id === "resetOrden") { if (cv.estilo) delete cv.estilo.orden; return cambio({ refrescarPanel: true }); }
+  if (b.id === "resetCol") { delete cv.colores; return cambio({ refrescarPanel: true }); }
+  if (b.dataset.anadir) { const k = b.dataset.anadir; (cv[k] ??= []).push(ESQUEMAS[k].nuevo()); abiertos.add(`${k}-${cv[k].length - 1}`); return cambio({ refrescarPanel: true }); }
+  if (b.dataset.borrar) {
+    e.preventDefault();
+    const k = b.dataset.borrar, i = +b.dataset.i;
+    if (!confirm(`¿Eliminar "${cv[k][i][ESQUEMAS[k].titulo] || "este elemento"}"? (Puedes deshacerlo)`)) return;
+    cv[k].splice(i, 1); return cambio({ refrescarPanel: true });
+  }
+  if (b.dataset.mover) {
+    e.preventDefault();
+    const k = b.dataset.mover, i = +b.dataset.i, j = i + +b.dataset.d, arr = cv[k];
+    if (j < 0 || j >= arr.length) return;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    return cambio({ refrescarPanel: true });
+  }
+});
+sec.addEventListener("toggle", e => { const d = e.target; if (d.dataset?.k) d.open ? abiertos.add(d.dataset.k) : abiertos.delete(d.dataset.k); }, true);
+
+/* ======================= Guardar / abrir ======================= */
+function serializar() {
+  return `/* ==========================================================================
+   DATOS DEL CURRÍCULUM — generado con editor.html (${new Date().toLocaleString("es-ES")}).
+   Puedes seguir editándolo con editor.html o a mano.
+   ========================================================================== */
+
+window.CV = ${JSON.stringify(cv, null, 2)};
+`;
+}
+async function guardar() {
+  clearTimeout(tGuardarHist); apuntarHistoria();
+  const texto = serializar();
+  if (window.showSaveFilePicker) {
+    try {
+      handle ??= await showSaveFilePicker({ suggestedName: "datos.js", types: [{ description: "Datos del CV", accept: { "text/javascript": [".js"] } }] });
+      const w = await handle.createWritable(); await w.write(texto); await w.close();
+      hecho("✅ Guardado. Selecciona siempre el datos.js de la carpeta cv.");
+      return;
+    } catch (err) { if (err.name === "AbortError") return; handle = null; }
+  }
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([texto], { type: "text/javascript" })), download: "datos.js" });
+  a.click(); URL.revokeObjectURL(a.href);
+  hecho("⬇️ Descargado datos.js: muévelo a la carpeta cv sustituyendo el anterior.");
+}
+function hecho(msg) { sucio = false; try { localStorage.removeItem(CLAVE); } catch (e) {} toast(msg, 5000); }
+
+/* ======================= Publicar en GitHub (para usar el editor online) ======================= */
+const CLAVE_GH = "cv-jm-github";
+const leerGH = () => {
+  let c = {}; try { c = JSON.parse(localStorage.getItem(CLAVE_GH) || "{}"); } catch (e) {}
+  try { c.token ||= sessionStorage.getItem(CLAVE_GH + "-token") || ""; } catch (e) {}
+  return { repo: c.repo || "", rama: c.rama || "main", ruta: c.ruta || "datos.js", token: c.token || "", recordar: !!c.recordar };
+};
+function escribirGH(c) {
+  try {
+    localStorage.setItem(CLAVE_GH, JSON.stringify({ repo: c.repo, rama: c.rama, ruta: c.ruta, recordar: c.recordar, token: c.recordar ? c.token : "" }));
+    c.recordar ? sessionStorage.removeItem(CLAVE_GH + "-token") : sessionStorage.setItem(CLAVE_GH + "-token", c.token);
+  } catch (e) {}
+}
+// Lo que haya en la URL del repo (https://github.com/usuario/repo) se queda en "usuario/repo"
+const limpiarRepo = r => r.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\.git$|\/+$/g, "");
+function apiGH(c, metodo = "GET", cuerpo, raw = false) {
+  const ruta = c.ruta.replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/");
+  return fetch(`https://api.github.com/repos/${c.repo}/contents/${ruta}` + (metodo === "GET" ? `?ref=${encodeURIComponent(c.rama)}` : ""), {
+    method: metodo, cache: "no-store",
+    headers: { Authorization: `Bearer ${c.token}`, Accept: raw ? "application/vnd.github.raw+json" : "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+    body: cuerpo && JSON.stringify(cuerpo)
+  });
+}
+const base64 = t => { const b = new TextEncoder().encode(t); let s = ""; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode(...b.subarray(i, i + 0x8000)); return btoa(s); };
+const errorGH = st => ({ 401: "El token no es válido o ha caducado.", 403: "El token no tiene permiso de escritura (Contents: Read and write) en ese repositorio.",
+  404: "No encuentro ese repositorio, rama o archivo (o el token no tiene acceso a él).", 409: "Conflicto con otro cambio: vuelve a pulsar Publicar.", 422: "GitHub rechazó el archivo (revisa la rama)." }[st] || `Error de GitHub (${st}).`);
+
+function configurarGH(publicarAlFinal = false) {
+  const c = leerGH(), d = $("#gh");
+  $("#gh-repo").value = c.repo; $("#gh-rama").value = c.rama; $("#gh-ruta").value = c.ruta;
+  $("#gh-token").value = c.token; $("#gh-recordar").checked = c.recordar;
+  d.returnValue = ""; d.showModal();
+  d.onclose = () => {
+    if (d.returnValue !== "ok") return;
+    escribirGH({ repo: limpiarRepo($("#gh-repo").value), rama: $("#gh-rama").value.trim() || "main", ruta: $("#gh-ruta").value.trim() || "datos.js",
+      token: $("#gh-token").value.trim(), recordar: $("#gh-recordar").checked });
+    if (publicarAlFinal) publicar(); else toast("Conexión con GitHub guardada");
+  };
+}
+$("#gh-olvidar").onclick = () => {
+  try { localStorage.removeItem(CLAVE_GH); sessionStorage.removeItem(CLAVE_GH + "-token"); } catch (e) {}
+  $("#gh").close(); toast("Datos de GitHub borrados de este navegador");
+};
+
+async function publicar() {
+  const c = leerGH();
+  if (!c.repo || !c.token) return configurarGH(true);
+  clearTimeout(tGuardarHist); apuntarHistoria();
+  const b = $("#publicar"); b.disabled = true; b.textContent = "☁️ Publicando…";
+  try {
+    const actual = await apiGH(c);
+    if (!actual.ok && actual.status !== 404) throw errorGH(actual.status);
+    const sha = actual.ok ? (await actual.json()).sha : undefined;
+    const r = await apiGH(c, "PUT", { message: "Actualizar CV desde el editor", content: base64(serializar()), branch: c.rama, sha });
+    if (!r.ok) throw errorGH(r.status);
+    hecho("✅ Publicado. Tu web se actualizará en 1–2 minutos.");
+  } catch (err) {
+    toast("❌ No se pudo publicar: " + (typeof err === "string" ? err : "sin conexión con GitHub."), 7000);
+  } finally { b.disabled = false; b.textContent = "☁️ Publicar"; }
+}
+$("#publicar").onclick = () => publicar();
+$("#ajustes-gh").onclick = () => configurarGH();
+
+// Online, GitHub Pages guarda en caché datos.js unos minutos: al abrir el editor se carga la última versión publicada
+async function cargarDeGitHub() {
+  const c = leerGH(); if (!c.repo || !c.token) return;
+  try {
+    const r = await apiGH(c, "GET", undefined, true); if (!r.ok) return;
+    const t = await r.text(); if (!t.includes("window.CV")) return;
+    const i = t.indexOf("window.CV"), json = t.slice(t.indexOf("=", i) + 1, t.lastIndexOf(";"));
+    const nuevo = JSON.parse(json);
+    if (JSON.stringify(nuevo) === JSON.stringify(window.CV) || sucio || $("#borrador").classList.contains("ver")) return;
+    cv = nuevo; historia = [JSON.stringify(cv)]; pos = 0; botonesHist();
+    enviar(); construirPanel();
+  } catch (e) {}
+}
+
+$("#abrir").onclick = () => $("#fichero").click();
+$("#fichero").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const w = {}; new Function("window", await f.text())(w);
+    if (!w.CV) throw new Error();
+    cv = w.CV; handle = null; cambio({ refrescarPanel: true }); toast("Cargado " + f.name);
+  } catch (err) { toast("Ese archivo no es un datos.js válido"); }
+  e.target.value = "";
+};
+
+/* ======================= Barra ======================= */
+let lineaY = 0;
+
+/* ======================= Soluciones automáticas ======================= */
+// Prueba cambios en una copia invisible del CV y devuelve solo los que hacen que quepa en el A4
+const medir = cand => new Promise(res => {
+  esperaMedida = res; idMedida++;
+  medidor.contentWindow.postMessage({ tipo: "cv", cv: structuredClone(cand), id: idMedida }, "*");
+  setTimeout(() => { if (esperaMedida === res) { esperaMedida = null; res(null); } }, 2500);
+});
+const ORDEN_DEF = { principal: ["experiencia", "proyectos", "creatividad"], lateral: ["contacto", "competencias", "formacion", "idiomas"] };
+const NOMBRES = Object.fromEntries(SECCIONES_CV);
+const ordenActual = c => {
+  const o = c.estilo?.orden || {};
+  const izq = (o.principal || ORDEN_DEF.principal).slice(), der = (o.lateral || ORDEN_DEF.lateral).filter(id => !izq.includes(id));
+  Object.keys(NOMBRES).forEach(id => { if (!izq.includes(id) && !der.includes(id)) (ORDEN_DEF.principal.includes(id) ? izq : der).push(id); });
+  return { principal: izq, lateral: der };
+};
+async function primeraQueCabe(etiqueta, valores, aplicar) {
+  for (const v of valores) {
+    const c = structuredClone(cv); c.estilo ??= {}; aplicar(c, v);
+    const r = await medir(c);
+    if (r && r.length === 0) return { texto: etiqueta(v), cv: c };
+  }
+  return null;
+}
+async function buscarSoluciones() {
+  const caja = $("#soluciones");
+  caja.innerHTML = `<div class="nota">Probando ajustes…</div>`;
+  const r0 = await medir(cv);
+  if (!r0) { caja.innerHTML = `<div class="nota">No he podido medir el CV. Recarga el editor (F5).</div>`; return; }
+  if (!r0.length) { caja.innerHTML = `<div class="nota">Ahora mismo sí cabe 👍</div>`; return; }
+  const malas = r0.map(c => c.columna === "derecha" ? "lateral" : "principal");
+  const est = cv.estilo || {}, sols = [];
+  const pasos = (desde, hasta, paso) => { const v = []; for (let x = desde - paso; x >= hasta - 1e-9; x -= paso) v.push(+x.toFixed(3)); return v; };
+  const nombreCol = c => c === "lateral" ? "derecha" : "izquierda";
+  // 1) Juntar los espacios solo en la(s) columna(s) que se pasan
+  sols.push(await primeraQueCabe(f => `Juntar un poco los espacios de la columna ${malas.map(nombreCol).join(" y ")} (un ${Math.round((1 - f) * 100)} % menos)`,
+    pasos(1, .5, .05), (c, f) => {
+      const o = ordenActual(c), ss = (c.estilo.secciones ??= {});
+      malas.forEach(col => o[col].forEach(id => {
+        const s = (ss[id] ??= {});
+        s.interno = +((s.interno ?? 1) * f).toFixed(3);
+        if (s.arriba > 0) s.arriba = Math.round(s.arriba * f);
+      }));
+    }));
+  // 2) Letra un poco más pequeña
+  sols.push(await primeraQueCabe(k => `Letra un poco más pequeña (al ${Math.round(k * 100)} %)`, pasos(est.k ?? 1, .9, .01), (c, k) => { c.estilo.k = k; }));
+  // 3) Interlineado
+  sols.push(await primeraQueCabe(lh => `Interlineado algo más ajustado (${lh.toFixed(2)})`, pasos(est.lh ?? 1.42, 1.26, .02), (c, lh) => { c.estilo.lh = lh; }));
+  // 4) Mover una sección a la otra columna (si en la otra hay sitio)
+  if (malas.length === 1) {
+    const col = malas[0], otra = col === "lateral" ? "principal" : "lateral";
+    for (const id of ordenActual(cv)[col]) {
+      if (sols.filter(Boolean).length >= 6) break;
+      const s = await primeraQueCabe(() => `Mover «${id === "creatividad" ? (cv.creatividad?.titulo || NOMBRES[id]) : NOMBRES[id]}» al final de la columna ${nombreCol(otra)}`, [1], c => {
+        const o = ordenActual(c); o[col] = o[col].filter(x => x !== id); o[otra].push(id); c.estilo.orden = o;
+      });
+      if (s) sols.push(s);
+    }
+  }
+  // 5) El QR de la tarjeta final
+  if (malas.includes("lateral") && cv.qr?.mostrar !== false && (cv.qr?.posicion || "final") === "final") {
+    sols.push(await primeraQueCabe(mm => `QR de la tarjeta más pequeño (${mm} mm)`, pasos(est.qf ?? 15, 12, 1), (c, mm) => { c.estilo.qf = mm; }));
+    sols.push(await primeraQueCabe(() => `Quitar la tarjeta del QR`, [1], c => { c.qr = { ...(c.qr || {}), mostrar: false }; }));
+  }
+  // 6) Márgenes de arriba y abajo
+  sols.push(await primeraQueCabe(mm => `Márgenes de arriba y abajo más finos (${mm} mm)`, pasos(Math.min(est.mt ?? 12, est.mb ?? 10), 5, 1), (c, mm) => { c.estilo.mt = mm; c.estilo.mb = Math.min(mm, est.mb ?? 10); }));
+  const ok = sols.filter(Boolean);
+  window._soluciones = ok;
+  caja.innerHTML = ok.length
+    ? `<div class="nota">Cualquiera de estas lo arregla (puedes deshacer con Ctrl+Z):</div>` + ok.map((s, i) => `<div class="sol"><span>${esc(s.texto)}</span><button type="button" data-sol="${i}">Aplicar</button></div>`).join("")
+    : `<div class="nota">No encuentro un ajuste pequeño que lo arregle: acorta algún texto o quita algún elemento de lo marcado en rojo.</div>`;
+}
+$("#buscarSol").onclick = buscarSoluciones;
+$("#soluciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-sol]"); if (!b) return;
+  cv = structuredClone(window._soluciones[+b.dataset.sol].cv);
+  $("#soluciones").innerHTML = "";
+  cambio({ refrescarPanel: true });
+  toast("✅ Aplicado. Si no te gusta, Ctrl+Z.");
+});
+$("#verA4").onclick = () => { const z = $("#marco").getBoundingClientRect().width / 860; $("#lienzo").scrollTop = Math.max(0, lineaY * z - 260); };
+$("#deshacer").onclick = () => irHistoria(-1);
+$("#rehacer").onclick = () => irHistoria(1);
+$("#guardar").onclick = guardar;
+$("#pdf").onclick = () => { toast("En el diálogo: Guardar como PDF · A4 · Márgenes: ninguno · Gráficos de fondo ✓", 6000); vista.contentWindow.postMessage({ tipo: "imprimir" }, "*"); };
+$("#ats").onclick = () => { modoATS = !modoATS; $("#ats").classList.toggle("on", modoATS); vista.contentWindow.postMessage({ tipo: "ats", on: modoATS }, "*"); };
+document.addEventListener("keydown", e => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  const k = e.key.toLowerCase();
+  if (k === "s") { e.preventDefault(); guardar(); }
+  const enTexto = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+  if (k === "z" && !enTexto) { e.preventDefault(); irHistoria(e.shiftKey ? 1 : -1); }
+  if (k === "y" && !enTexto) { e.preventDefault(); irHistoria(1); }
+});
+window.addEventListener("beforeunload", e => { if (sucio) { e.preventDefault(); e.returnValue = ""; } });
+
+let tToast;
+function toast(msg, ms = 2500) { const t = $("#toast"); t.textContent = msg; t.classList.add("ver"); clearTimeout(tToast); tToast = setTimeout(() => t.classList.remove("ver"), ms); }
+
+/* ======================= Inicio ======================= */
+try {
+  const b = JSON.parse(localStorage.getItem(CLAVE) || "null");
+  if (b && JSON.stringify(b.cv) !== JSON.stringify(cv)) {
+    $("#borrador").classList.add("ver");
+    $("#borrador").firstChild.textContent = `Tienes cambios sin guardar del ${new Date(b.fecha).toLocaleString("es-ES")}.`;
+    $("#recuperar").onclick = () => { cv = b.cv; $("#borrador").classList.remove("ver"); cambio({ refrescarPanel: true }); };
+    $("#descartar").onclick = () => { localStorage.removeItem(CLAVE); $("#borrador").classList.remove("ver"); };
+  }
+} catch (e) {}
+construirPanel(); botonesHist(); ajustarZoom();
+if (!window.CV) toast("No se encontró datos.js junto a editor.html", 6000);
+cargarDeGitHub();
+</script>
+</body>
+</html>
