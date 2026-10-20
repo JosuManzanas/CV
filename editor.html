@@ -131,7 +131,12 @@
   .bienv h2 { color: var(--indigo); font-size: 22px; line-height: 1.15; }
   .bienv header p { color: var(--suave); font-size: 13.5px; margin-top: 2px; }
   .opciones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .opciones button { display: grid; gap: 6px; justify-items: start; text-align: left; padding: 14px; border-radius: 14px; border: 1.5px solid var(--linea); background: var(--papel); cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
+  body.bloqueado .zona, body.bloqueado .top button, body.bloqueado .top .sep { visibility: hidden; }
+  .opciones > div { display: grid; gap: 6px; justify-items: start; align-content: start; text-align: left; padding: 14px; border-radius: 14px; border: 1.5px solid var(--indigo); background: #f4f4fb; }
+  .ejemplos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .opciones .ejemplos button { display: inline-flex; gap: 5px; align-items: center; padding: 6px 10px; border-radius: 999px; border: 1.5px solid var(--linea); background: #fff; font-size: 12.5px; font-weight: 600; color: var(--indigo); }
+  .opciones .ejemplos button:hover { transform: none; box-shadow: none; border-color: var(--indigo); }
+  .opciones > button { display: grid; gap: 6px; justify-items: start; text-align: left; padding: 14px; border-radius: 14px; border: 1.5px solid var(--linea); background: var(--papel); cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
   .opciones button:hover { border-color: var(--indigo); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(32,32,128,.12); }
   .opciones b { color: var(--indigo); font-size: 14.5px; }
   .opciones span { font-size: 12.5px; color: var(--suave); line-height: 1.4; }
@@ -193,9 +198,9 @@
   style="position:absolute;left:-10000px;top:0;width:860px;height:1300px;border:0;pointer-events:none"></iframe>
 <dialog id="gh">
   <form method="dialog">
-    <h3>☁️ Publicar en tu web (GitHub)</h3>
+    <h3 id="gh-titulo">☁️ Publicar en tu web (GitHub)</h3>
     <p>El editor guarda los cambios directamente en el <code>datos.js</code> de tu repositorio y la web se actualiza en 1–2 minutos.</p>
-    <label class="campo">Repositorio <span class="ayuda">usuario/repositorio, p. ej. <code>josumanzanas/josumanzanas.github.io</code></span>
+    <label class="campo">Repositorio <span class="ayuda">usuario/repositorio, p. ej. <code>JosuManzanas/CV</code></span>
       <input type="text" id="gh-repo" required placeholder="usuario/repositorio" autocomplete="off" spellcheck="false"></label>
     <div class="fila">
       <label class="campo">Rama <input type="text" id="gh-rama" placeholder="main" spellcheck="false"></label>
@@ -213,7 +218,7 @@
     <div class="botones">
       <button type="button" class="olvidar" id="gh-olvidar">Olvidar</button>
       <button value="cancelar" formnovalidate>Cancelar</button>
-      <button value="ok" class="ok">Guardar y publicar</button>
+      <button value="ok" class="ok" id="gh-ok">Guardar y publicar</button>
     </div>
   </form>
 </dialog>
@@ -221,7 +226,7 @@
   <div class="bienv">
     <header><img src="logo.svg" alt=""><div><h2>Crea tu currículum en minutos</h2><p>Gratis, sin registrarte y sin que tus datos salgan de tu navegador.</p></div></header>
     <div class="opciones">
-      <button type="button" data-empezar="ejemplo"><i>📄</i><b>Partir de un ejemplo</b><span>Un CV completo de muestra: cambia los textos por los tuyos.</span></button>
+      <div><i>📄</i><b>Partir de un ejemplo</b><span>Elige uno parecido a tu sector y cambia los textos por los tuyos.</span><div class="ejemplos" id="ejemplos"></div></div>
       <button type="button" data-empezar="blanco"><i>✨</i><b>Empezar en blanco</b><span>Solo la estructura, con pistas de qué poner en cada parte.</span></button>
       <button type="button" data-empezar="abrir"><i>📂</i><b>Abrir mi archivo</b><span>Sigue con el CV que guardaste otro día.</span></button>
     </div>
@@ -231,7 +236,6 @@
 <input type="file" id="fichero" accept=".json,.js,application/json,text/javascript" hidden>
 <div class="toast" id="toast"></div>
 
-<script src="datos.js"></script>
 <script src="plantillas.js"></script>
 <script>
 /* ======================= Modo ======================= */
@@ -246,7 +250,9 @@ if (PUBLICO) document.title = "JM-CV Editor · Crea tu CV gratis";
 const CLAVE = PUBLICO ? "cv-jm-mi-cv" : "cv-jm-borrador";
 let guardadoPublico = null;
 try { guardadoPublico = PUBLICO ? JSON.parse(localStorage.getItem(CLAVE) || "null")?.cv : null; } catch (e) {}
-let cv = structuredClone(PUBLICO ? (guardadoPublico || window.CV_BLANCO || {}) : (window.CV || {}));
+// En modo propio el CV empieza vacío y solo se rellena tras comprobar tu token (entrarPropio)
+let cv = separarApellidos(structuredClone(PUBLICO ? (guardadoPublico || window.CV_BLANCO || {}) : {}));
+if (PROPIO) document.body.classList.add("bloqueado");
 let historia = [JSON.stringify(cv)], pos = 0, tGuardarHist = null;
 let sucio = false, handle = null, modoATS = false;
 const abiertos = new Set(["sec-cabecera"]);
@@ -291,7 +297,10 @@ function botonesHist() { $("#deshacer").disabled = pos <= 0; $("#rehacer").disab
 /* ======================= Vista previa ======================= */
 // Destino de los mensajes: la propia web (en local, file:// no tiene origen y hay que usar "*")
 const ORIGEN = location.protocol === "file:" ? "*" : location.origin;
-function enviar(foco) { vista.contentWindow?.postMessage({ tipo: "cv", cv: structuredClone(cv), foco }, ORIGEN); }
+function enviar(foco) {
+  if (document.body.classList.contains("bloqueado") || !cv?.contacto) return;   // nada que mostrar hasta entrar
+  vista.contentWindow?.postMessage({ tipo: "cv", cv: structuredClone(cv), foco }, ORIGEN);
+}
 const medidor = document.getElementById("medidor");
 let esperaMedida = null, idMedida = 0;
 window.addEventListener("message", e => {
@@ -378,7 +387,7 @@ const ESQUEMAS = {
     campos: [["idioma", "Idioma"], ["nivel", "Nivel"], ["porcentaje", "Barra", "rango"]] }
 };
 
-const SECCIONES_CV = [["contacto", "Contacto"], ["experiencia", "Experiencia"], ["proyectos", "Proyectos"], ["creatividad", "Diseño y multimedia"],
+const SECCIONES_CV = [["contacto", "Contacto"], ["experiencia", "Experiencia"], ["proyectos", "Proyectos"], ["creatividad", PUBLICO ? "Herramientas y extras" : "Diseño y multimedia"],
   ["competencias", "Competencias"], ["formacion", "Formación"], ["idiomas", "Idiomas"]];
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -442,7 +451,7 @@ function construirPanel() {
   const col = cv.colores || {};
   $("#secciones").innerHTML = [
     seccion("sec-cabecera", "Cabecera", "#202080",
-      `<div class="fila">${campo("nombre", "Nombre")}${campo("apellido2", "2º apellido")}</div>${campo("titular", "Titular")}${campo("perfil", "Perfil profesional", "area")}`),
+      `${campo("nombre", "Nombre")}<div class="fila">${campo("apellido1", "1er apellido")}${campo("apellido2", "2º apellido")}</div>${campo("titular", "Titular")}${campo("perfil", "Perfil profesional", "area")}`),
     seccion("sec-contacto", "Contacto", "#D3BC5F",
       `${campo("contacto.email", "Email")}<div class="fila">${campo("contacto.telefono", "Teléfono")}${campo("contacto.ubicacion", "Ubicación")}</div>
        ${campo("contacto.linkedin", "LinkedIn")}${campo("contacto.web", "Web")}${campo("contacto.github", "GitHub", "texto", "vacío = no se muestra")}
@@ -455,10 +464,10 @@ function construirPanel() {
        ${{ final: campo("estilo.qf", "Tamaño del QR", "desliz", [12, 26, 0.5, 15, "mm"]), contacto: campo("estilo.qr", "Tamaño del QR", "desliz", [12, 24, 0.5, 15, "mm"]), cabecera: campo("estilo.qc", "Tamaño del QR", "desliz", [16, 32, 0.5, 24, "mm"]) }[cv.qr?.posicion || "final"]}`),
     seccion("sec-exp", "Experiencia", "#FF4064", lista("experiencia")),
     seccion("sec-proy", "Proyectos", "#D3BC5F", lista("proyectos")),
-    seccion("sec-crea", "Diseño y multimedia", "#FF4064",
+    seccion("sec-crea", PUBLICO ? "Herramientas y extras" : "Diseño y multimedia", "#FF4064",
       `${campo("creatividad.titulo", "Título de la sección")}${campo("creatividad.texto", "Frase (opcional)", "area", "vacío = sin frase")}${campo("creatividad.items", "Herramientas", "lineas", "una por línea · vacío = se oculta la sección")}`),
     seccion("sec-comp", "Competencias", "#202080",
-      `${campo("competencias.tecnicas", "Técnicas", "lineas", "una por línea")}${campo("competencias.ia", "IA y agentes", "lineas", "una por línea · vacío = se oculta")}${campo("competencias.transversales", "Transversales", "lineas", "una por línea")}
+      `${campo("competencias.tecnicas", "Técnicas", "lineas", "una por línea")}${campo("competencias.iaTitulo", "Título del grupo extra", "texto", "p. ej. IA, Software, Idiomas técnicos")}${campo("competencias.ia", "Grupo extra", "lineas", "una por línea · vacío = se oculta")}${campo("competencias.transversales", "Transversales", "lineas", "una por línea")}
        ${campo("competencias.nociones", "Nota bajo técnicas", "texto", "vacío = se oculta")}`),
     seccion("sec-form", "Formación y cursos", "#FF4064", lista("formacion") + campo("cursos", "Cursos complementarios", "lineas", "uno por línea")),
     seccion("sec-idi", "Idiomas y otros", "#D3BC5F", lista("idiomas") + campo("otros", "Otros (carnets, acreditaciones…)", "lineas", "uno por línea")),
@@ -563,8 +572,10 @@ function serializar() {
 window.CV = ${JSON.stringify(cv, null, 2)};
 `;
 }
-const nombreArchivo = ext => ("CV " + [cv.nombre, cv.apellido2].filter(Boolean).join(" ")).replace(/[\\/:*?"<>|]+/g, "").trim() + ext;
+const nombreArchivo = ext => ("CV " + [cv.nombre, cv.apellido1, cv.apellido2].filter(Boolean).join(" ")).replace(/[\\/:*?"<>|]+/g, "").trim() + ext;
+const bloqueado = () => document.body.classList.contains("bloqueado");
 async function guardar() {
+  if (bloqueado()) return;
   clearTimeout(tGuardarHist); apuntarHistoria();
   if (PUBLICO) {
     const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([JSON.stringify(cv, null, 2)], { type: "application/json" })), download: nombreArchivo(" (datos).json") });
@@ -590,11 +601,18 @@ function hecho(msg) { sucio = false; try { localStorage.removeItem(CLAVE); } cat
 /* ======================= Publicar en GitHub (para usar el editor online) ======================= */
 const CLAVE_GH = "cv-jm-github";
 // Lee un datos.js como JSON (sin ejecutar código) y comprueba que parece un CV
+// Datos antiguos: "nombre" traía nombre + 1er apellido juntos → se separan (primera palabra = nombre)
+function separarApellidos(d) {
+  if (d && typeof d === "object" && d.apellido1 == null && typeof d.nombre === "string") {
+    const p = d.nombre.trim().split(/\s+/); d.nombre = p.shift() || ""; d.apellido1 = p.join(" ");
+  }
+  return d;
+}
 function leerDatosJS(t) {
   const i = t.indexOf("window.CV");
   const d = JSON.parse(i < 0 ? t : t.slice(t.indexOf("=", i) + 1, t.lastIndexOf(";")));
   if (!d || typeof d !== "object" || Array.isArray(d) || typeof d.nombre !== "string" || !d.contacto) throw new Error("no es un CV");
-  return d;
+  return separarApellidos(d);
 }
 // Seguridad: formato estricto de repositorio y archivo antes de hablar con GitHub
 const repoValido = r => /^[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}$/.test(r) && !/\.\./.test(r);
@@ -625,16 +643,19 @@ const base64 = t => { const b = new TextEncoder().encode(t); let s = ""; for (le
 const errorGH = st => ({ 401: "El token no es válido o ha caducado.", 403: "El token no tiene permiso de escritura (Contents: Read and write) en ese repositorio.",
   404: "No encuentro ese repositorio, rama o archivo (o el token no tiene acceso a él).", 409: "Conflicto con otro cambio: vuelve a pulsar Publicar.", 422: "GitHub rechazó el archivo (revisa la rama)." }[st] || `Error de GitHub (${st}).`);
 
-function configurarGH(publicarAlFinal = false) {
+// accion: "entrar" (abrir tu CV en el editor) · "publicar" · "ajustes"
+function configurarGH(accion = "ajustes") {
   const c = leerGH(), d = $("#gh");
+  $("#gh-titulo").textContent = accion === "entrar" ? "🔐 Entrar a mi CV" : "☁️ Publicar en tu web (GitHub)";
+  $("#gh-ok").textContent = { entrar: "Entrar", publicar: "Guardar y publicar", ajustes: "Guardar" }[accion];
   $("#gh-repo").value = c.repo; $("#gh-rama").value = c.rama; $("#gh-ruta").value = c.ruta;
   $("#gh-token").value = c.token; $("#gh-recordar").checked = c.recordar;
   d.returnValue = ""; d.showModal();
   d.onclose = () => {
-    if (d.returnValue !== "ok") return;
+    if (d.returnValue !== "ok") { if (accion === "entrar") location.href = "editor.html"; return; }
     escribirGH({ repo: limpiarRepo($("#gh-repo").value), rama: $("#gh-rama").value.trim() || "main", ruta: $("#gh-ruta").value.trim() || "datos.js",
       token: $("#gh-token").value.trim(), recordar: $("#gh-recordar").checked });
-    if (publicarAlFinal) publicar(); else toast("Conexión con GitHub guardada");
+    if (accion === "entrar") entrarPropio(); else if (accion === "publicar") publicar(); else toast("Conexión con GitHub guardada");
   };
 }
 $("#gh-olvidar").onclick = () => {
@@ -643,9 +664,10 @@ $("#gh-olvidar").onclick = () => {
 };
 
 async function publicar() {
+  if (bloqueado()) return;
   const c = leerGH();
-  if (!c.repo || !c.token) return configurarGH(true);
-  if (!repoValido(c.repo) || !rutaGHValida(c.ruta) || !ramaValida(c.rama)) { toast("⚠️ Revisa el repositorio, la rama o el archivo (debe ser un datos….js)", 6000); return configurarGH(true); }
+  if (!c.repo || !c.token) return configurarGH("publicar");
+  if (!repoValido(c.repo) || !rutaGHValida(c.ruta) || !ramaValida(c.rama)) { toast("⚠️ Revisa el repositorio, la rama o el archivo (debe ser un datos….js)", 6000); return configurarGH("publicar"); }
   clearTimeout(tGuardarHist); apuntarHistoria();
   const b = $("#publicar"); b.disabled = true; b.textContent = "☁️ Publicando…";
   try {
@@ -660,18 +682,32 @@ async function publicar() {
   } finally { b.disabled = false; b.textContent = "☁️ Publicar"; }
 }
 $("#publicar").onclick = () => publicar();
-$("#ajustes-gh").onclick = () => configurarGH();
+$("#ajustes-gh").onclick = () => configurarGH("ajustes");
 
-// Online, GitHub Pages guarda en caché datos.js unos minutos: al abrir el editor se carga la última versión publicada
-async function cargarDeGitHub() {
-  const c = leerGH(); if (!c.repo || !c.token || !repoValido(c.repo) || !rutaGHValida(c.ruta) || !ramaValida(c.rama)) return;
+// Tu CV solo se abre en el editor con un token que pueda ESCRIBIR en tu repositorio.
+// (El repositorio es público, así que leerlo no demuestra nada: cualquier cuenta de GitHub puede leerlo.)
+async function entrarPropio() {
+  const c = leerGH();
+  if (!c.repo || !c.token || !repoValido(c.repo) || !rutaGHValida(c.ruta) || !ramaValida(c.rama)) return configurarGH("entrar");
+  document.body.classList.add("bloqueado");
   try {
-    const r = await apiGH(c, "GET", undefined, true); if (!r.ok) return;
-    const nuevo = leerDatosJS(await r.text());
-    if (JSON.stringify(nuevo) === JSON.stringify(window.CV) || sucio || $("#borrador").classList.contains("ver")) return;
-    cv = nuevo; historia = [JSON.stringify(cv)]; pos = 0; botonesHist();
-    enviar(); construirPanel();
-  } catch (e) {}
+    const rr = await fetch(`https://api.github.com/repos/${c.repo}`, { cache: "no-store",
+      headers: { Authorization: `Bearer ${c.token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" } });
+    if (!rr.ok) throw errorGH(rr.status);
+    const p = (await rr.json()).permissions || {};
+    if (!p.push && !p.admin) throw "Ese token no tiene permiso de escritura en el repositorio: no es del dueño de este CV.";
+    const r = await apiGH(c, "GET", undefined, true);
+    if (!r.ok) throw errorGH(r.status);
+    cv = leerDatosJS(await r.text());   // siempre la última versión (GitHub Pages tarda unos minutos en refrescar la web)
+    historia = [JSON.stringify(cv)]; pos = 0; botonesHist();
+    document.body.classList.remove("bloqueado");
+    revisarBorrador(); enviar(); construirPanel();
+    toast("🔓 Has entrado en tu CV");
+  } catch (err) {
+    try { sessionStorage.removeItem(CLAVE_GH + "-token"); } catch (e) {}
+    toast("❌ No se pudo entrar: " + (typeof err === "string" ? err : "sin conexión con GitHub."), 7000);
+    configurarGH("entrar");
+  }
 }
 
 $("#abrir").onclick = () => $("#fichero").click();
@@ -799,15 +835,16 @@ function empezar(base) {
 }
 $("#bienvenida").addEventListener("click", e => {
   const b = e.target.closest("[data-empezar]"); if (!b) return;
-  if (b.dataset.empezar === "ejemplo") empezar(window.CV_EJEMPLO);
+  if (b.dataset.empezar.startsWith("ejemplo:")) { const ej = (window.CV_EJEMPLOS || []).find(x => x.id === b.dataset.empezar.slice(8)); if (ej) empezar(ej.cv); }
   if (b.dataset.empezar === "blanco") empezar(window.CV_BLANCO);
   if (b.dataset.empezar === "abrir") $("#fichero").click();
 });
 // La primera vez no se puede cerrar sin elegir (Esc empezaría con un CV vacío sin querer)
 $("#bienvenida").addEventListener("cancel", e => { if (!guardadoPublico && !localStorage.getItem(CLAVE)) e.preventDefault(); });
 $("#nuevo").onclick = () => abrirBienvenida();
+$("#ejemplos").innerHTML = (window.CV_EJEMPLOS || []).map(x => `<button type="button" data-empezar="ejemplo:${esc(x.id)}">${esc(x.icono)} ${esc(x.etiqueta)}</button>`).join("");
 
-try {
+function revisarBorrador() { try {
   const b = PUBLICO ? null : JSON.parse(localStorage.getItem(CLAVE) || "null");
   if (b && JSON.stringify(b.cv) !== JSON.stringify(cv)) {
     $("#borrador").classList.add("ver");
@@ -815,10 +852,10 @@ try {
     $("#recuperar").onclick = () => { cv = b.cv; $("#borrador").classList.remove("ver"); cambio({ refrescarPanel: true }); };
     $("#descartar").onclick = () => { localStorage.removeItem(CLAVE); $("#borrador").classList.remove("ver"); };
   }
-} catch (e) {}
+} catch (e) {} }
 construirPanel(); botonesHist(); ajustarZoom();
 if (PUBLICO) { if (!guardadoPublico) abrirBienvenida(); }
-else { if (!window.CV) toast("No se encontró datos.js junto a editor.html", 6000); cargarDeGitHub(); }
+else entrarPropio();
 </script>
 </body>
 </html>

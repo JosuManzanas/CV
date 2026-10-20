@@ -4,7 +4,8 @@
    ========================================================================== */
 
 window.CV = {
-  "nombre": "Josu Manzanas",
+  "nombre": "Josu",
+  "apellido1": "Manzanas",
   "apellido2": "Beldarrain",
   "titular": "Técnico de reparación electrónica",
   "perfil": "Técnico de reparación electrónica en KL KateaLegaia, con experiencia en diagnóstico y reparación de circuitos, pruebas funcionales, control de calidad y resolución de incidencias en producción. Promoción interna desde peón de producción hasta técnico de reparaciones. Desarrollo herramientas internas en Python y scripts en Bash que agilizan el trabajo diario, mejoran la trazabilidad y reducen tiempos de resolución.",

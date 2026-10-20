@@ -338,6 +338,7 @@
   const ORDEN = { principal: ["experiencia", "proyectos", "creatividad"], lateral: ["contacto", "competencias", "formacion", "idiomas"] };
 
   function render(cv) {
+    if (!cv || typeof cv !== "object" || !cv.contacto) return;
     const c = cv.contacto;
     const raiz = document.documentElement.style;
     const col = cv.colores || {};
@@ -353,8 +354,12 @@
     const tel = (c.telefono || "").replace(/\s/g, "");
     // Contacto en vCard 3.0 estándar (saltos de línea CRLF, como exige el formato): Google Lens y las cámaras lo reconocen
     const vc = t => String(t).replace(/([\\;,])/g, "\\$1");
-    const nom = cv.nombre.split(" "), apellidos = [nom.slice(1).join(" "), cv.apellido2].filter(Boolean).join(" ");
-    const vcard = ["BEGIN:VCARD", "VERSION:3.0", `N:${vc(apellidos)};${vc(nom[0])};;;`, `FN:${vc([cv.nombre, cv.apellido2].filter(Boolean).join(" "))}`,
+    // Nombre y apellidos por separado (los datos antiguos con "Nombre Apellido" en nombre siguen funcionando)
+    const nom = String(cv.nombre || "").split(" ");
+    const pila = cv.apellido1 != null ? cv.nombre : nom[0];
+    const apellidos = [cv.apellido1 != null ? cv.apellido1 : nom.slice(1).join(" "), cv.apellido2].filter(Boolean).join(" ");
+    const nombreCompleto = [cv.nombre, cv.apellido1, cv.apellido2].filter(Boolean).join(" ");
+    const vcard = ["BEGIN:VCARD", "VERSION:3.0", `N:${vc(apellidos)};${vc(pila)};;;`, `FN:${vc(nombreCompleto)}`,
       tel && `TEL;TYPE=CELL:${/^\d{9}$/.test(tel) ? "+34" + tel : tel}`, c.email && `EMAIL:${c.email.toLowerCase()}`, "END:VCARD"].filter(Boolean).join("\r\n");
     const telInt = /^\d{9}$/.test(tel) ? "+34" + tel : tel;
     const QR_TIPOS = {
@@ -369,7 +374,7 @@
     const qrHref = qr.tipo === "vcard" ? "data:text/vcard;charset=utf-8," + encodeURIComponent(vcard) : qrUrl;
     // En el editor el QR no es un enlace: un clic abre sus opciones en el panel
     const editando = new URLSearchParams(location.search).has("editar");
-    const qrDescarga = editando ? "" : qr.tipo === "vcard" ? ` download="${esc([cv.nombre, cv.apellido2].filter(Boolean).join(" "))}.vcf"` : "";
+    const qrDescarga = editando ? "" : qr.tipo === "vcard" ? ` download="${esc(nombreCompleto)}.vcf"` : "";
     const enCab = posQR === "cabecera";   // opcional: QR grande arriba a la derecha
     const qrTexto = { llamar: "Llámame", whatsapp: "Escríbeme por WhatsApp", vcard: "Guarda mi contacto", enlace: "Mi CV online" }[qr.tipo || "llamar"];
     const qrTitulo = { llamar: "Escanéame para llamarme", whatsapp: "Escanéame para escribirme por WhatsApp", vcard: "Escanéame para guardar mi contacto", enlace: "Escanéame: " + qrUrl }[qr.tipo || "llamar"];
@@ -431,7 +436,7 @@
           <div class="subtit">${ico("gear", "azul")}Técnicas</div>
           ${chips(k.tecnicas, "", "competencias.tecnicas")}
           ${k.nociones ? `<p class="nota">${ed("competencias.nociones", k.nociones)}</p>` : ""}
-          ${k.ia?.length ? `<div class="subtit sep">${ico("ia", "coral")}IA y agentes</div>${chips(k.ia, "coral", "competencias.ia")}` : ""}
+          ${k.ia?.length ? `<div class="subtit sep">${ico("ia", "coral")}${ed("competencias.iaTitulo", k.iaTitulo || "IA y agentes")}</div>${chips(k.ia, "coral", "competencias.ia")}` : ""}
           <div class="subtit sep">${ico("team")}Transversales</div>
           ${chips(k.transversales, "oro", "competencias.transversales")}`),
       formacion: () => sec("formacion", `
@@ -466,7 +471,7 @@
 
     const hoja = document.getElementById("cv");
     hoja.classList.toggle("lt-color", est.lineaTiempo === "color");
-    const nombreHtml = `<h1>${ed("nombre", cv.nombre)}${cv.apellido2 ? " " + ed("apellido2", cv.apellido2) : ""}</h1>
+    const nombreHtml = `<h1>${ed("nombre", cv.nombre)}${cv.apellido1 ? " " + ed("apellido1", cv.apellido1) : ""}${cv.apellido2 ? " " + ed("apellido2", cv.apellido2) : ""}</h1>
           <p class="titular">${ed("titular", cv.titular)}</p>`;
     hoja.classList.toggle("con-cabecera", enCab);
     hoja.innerHTML = `
