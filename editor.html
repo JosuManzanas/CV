@@ -117,6 +117,29 @@
   dialog#gh .botones .ok { background: var(--indigo); border-color: var(--indigo); color: #fff; font-weight: 700; }
   dialog#gh .olvidar { margin-right: auto; color: var(--coral) !important; border-color: transparent !important; }
 
+  /* ---------- modo público (cualquiera crea su CV) / modo propio (Josu, con Publicar) ---------- */
+  body.publico .solo-propio { display: none !important; }
+  body:not(.publico) .solo-publico { display: none !important; }
+  .top .pdf { background: #fff; border-color: #fff; color: var(--indigo); font-weight: 700; }
+  .top .pdf:hover { background: #f1f1fb; }
+  .privacidad { font-size: 12px; color: var(--suave); background: #f4f4fb; border: 1px solid var(--linea); border-radius: 10px; padding: 8px 10px; margin-bottom: 12px; line-height: 1.45; }
+  dialog#bienvenida { margin: auto; border: 0; border-radius: 18px; padding: 0; width: min(640px, calc(100vw - 32px)); box-shadow: 0 18px 60px rgba(20,20,60,.3); color: var(--texto); }
+  dialog#bienvenida::backdrop { background: rgba(20,20,50,.55); }
+  .bienv { padding: 26px 26px 22px; display: grid; gap: 16px; }
+  .bienv header { display: flex; align-items: center; gap: 14px; }
+  .bienv header img { width: 52px; height: 52px; }
+  .bienv h2 { color: var(--indigo); font-size: 22px; line-height: 1.15; }
+  .bienv header p { color: var(--suave); font-size: 13.5px; margin-top: 2px; }
+  .opciones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .opciones button { display: grid; gap: 6px; justify-items: start; text-align: left; padding: 14px; border-radius: 14px; border: 1.5px solid var(--linea); background: var(--papel); cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
+  .opciones button:hover { border-color: var(--indigo); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(32,32,128,.12); }
+  .opciones b { color: var(--indigo); font-size: 14.5px; }
+  .opciones span { font-size: 12.5px; color: var(--suave); line-height: 1.4; }
+  .opciones i { font-style: normal; font-size: 24px; }
+  .pasos { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--suave); }
+  .pasos b { color: var(--indigo); }
+  @media (max-width: 600px) { .opciones { grid-template-columns: 1fr; } }
+
   .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(30px); background: var(--indigo); color: #fff; padding: 10px 16px; border-radius: 10px; opacity: 0; pointer-events: none; transition: .25s; box-shadow: 0 6px 24px rgba(0,0,40,.25); font-size: 13.5px; max-width: 90vw; }
   .toast.ver { opacity: 1; transform: translateX(-50%); }
 
@@ -133,21 +156,24 @@
 <header class="top">
   <div class="marca">
     <img src="logo.svg" alt="" aria-hidden="true">
-    Editor de CV <small>· edita, arrastra y ajusta</small>
+    <span class="solo-propio">Editor de CV <small>· edita, arrastra y ajusta</small></span>
+    <span class="solo-publico">JM-CV Editor <small>· crea tu CV gratis</small></span>
   </div>
   <button id="deshacer" title="Deshacer (Ctrl+Z)">↶ Deshacer</button>
   <button id="rehacer" title="Rehacer (Ctrl+Y)">↷ Rehacer</button>
   <span class="sep"></span>
   <button id="ats" title="Ver cómo queda la versión de una columna para filtros ATS">Versión ATS</button>
-  <button id="abrir" title="Cargar otro datos.js">Abrir…</button>
-  <button id="pdf">Descargar PDF</button>
-  <button id="guardar" class="guardar" title="Guardar una copia en este ordenador (Ctrl+S)">💾 Guardar</button>
-  <button id="publicar" class="publicar" title="Publicar los cambios en tu web (GitHub Pages)">☁️ Publicar</button>
-  <button id="ajustes-gh" title="Configurar la conexión con GitHub">⚙︎</button>
+  <button id="nuevo" class="solo-publico" title="Empezar otro CV (ejemplo, en blanco o desde un archivo)">+ Nuevo</button>
+  <button id="abrir" title="Abrir un archivo de datos guardado antes">📂 Abrir…</button>
+  <button id="guardar" title="Descargar tus datos para seguir editando otro día (Ctrl+S)"><span class="solo-propio">💾 Guardar</span><span class="solo-publico">💾 Guardar mis datos</span></button>
+  <button id="pdf" class="guardar">⬇ Descargar PDF</button>
+  <button id="publicar" class="publicar solo-propio" title="Publicar los cambios en tu web (GitHub Pages)">☁️ Publicar</button>
+  <button id="ajustes-gh" class="solo-propio" title="Configurar la conexión con GitHub">⚙︎</button>
 </header>
 
 <div class="zona">
   <aside class="panel" id="panel">
+    <p class="privacidad solo-publico">🔒 Tu CV se guarda <b>solo en este navegador</b>: no se sube a ningún servidor. Para seguir en otro ordenador, usa <b>💾 Guardar mis datos</b> y luego <b>📂 Abrir…</b></p>
     <div class="borrador" id="borrador">
       Tienes cambios sin guardar de una sesión anterior.
       <div><button class="boton2" id="recuperar">Recuperar</button><button class="boton2" id="descartar">Descartar</button></div>
@@ -191,14 +217,36 @@
     </div>
   </form>
 </dialog>
-<input type="file" id="fichero" accept=".js,text/javascript" hidden>
+<dialog id="bienvenida">
+  <div class="bienv">
+    <header><img src="logo.svg" alt=""><div><h2>Crea tu currículum en minutos</h2><p>Gratis, sin registrarte y sin que tus datos salgan de tu navegador.</p></div></header>
+    <div class="opciones">
+      <button type="button" data-empezar="ejemplo"><i>📄</i><b>Partir de un ejemplo</b><span>Un CV completo de muestra: cambia los textos por los tuyos.</span></button>
+      <button type="button" data-empezar="blanco"><i>✨</i><b>Empezar en blanco</b><span>Solo la estructura, con pistas de qué poner en cada parte.</span></button>
+      <button type="button" data-empezar="abrir"><i>📂</i><b>Abrir mi archivo</b><span>Sigue con el CV que guardaste otro día.</span></button>
+    </div>
+    <div class="pasos"><span><b>1.</b> Haz clic en cualquier texto para cambiarlo</span><span><b>2.</b> Arrastra para reordenar</span><span><b>3.</b> Pulsa <b>⬇ Descargar PDF</b></span></div>
+  </div>
+</dialog>
+<input type="file" id="fichero" accept=".json,.js,application/json,text/javascript" hidden>
 <div class="toast" id="toast"></div>
 
 <script src="datos.js"></script>
+<script src="plantillas.js"></script>
 <script>
+/* ======================= Modo ======================= */
+// Modo propio (el CV de Josu, con ☁️ Publicar): editor.html?yo, o si este navegador ya tiene la conexión con GitHub.
+// Modo público (por defecto): cualquiera crea SU propio CV, que se guarda solo en su navegador.
+const PROPIO = new URLSearchParams(location.search).has("yo") || (() => { try { return !!JSON.parse(localStorage.getItem("cv-jm-github") || "{}").repo; } catch (e) { return false; } })();
+const PUBLICO = !PROPIO;
+document.body.classList.toggle("publico", PUBLICO);
+if (PUBLICO) document.title = "JM-CV Editor · Crea tu CV gratis";
+
 /* ======================= Estado ======================= */
-const CLAVE = "cv-jm-borrador";
-let cv = structuredClone(window.CV || {});
+const CLAVE = PUBLICO ? "cv-jm-mi-cv" : "cv-jm-borrador";
+let guardadoPublico = null;
+try { guardadoPublico = PUBLICO ? JSON.parse(localStorage.getItem(CLAVE) || "null")?.cv : null; } catch (e) {}
+let cv = structuredClone(PUBLICO ? (guardadoPublico || window.CV_BLANCO || {}) : (window.CV || {}));
 let historia = [JSON.stringify(cv)], pos = 0, tGuardarHist = null;
 let sucio = false, handle = null, modoATS = false;
 const abiertos = new Set(["sec-cabecera"]);
@@ -515,8 +563,15 @@ function serializar() {
 window.CV = ${JSON.stringify(cv, null, 2)};
 `;
 }
+const nombreArchivo = ext => ("CV " + [cv.nombre, cv.apellido2].filter(Boolean).join(" ")).replace(/[\\/:*?"<>|]+/g, "").trim() + ext;
 async function guardar() {
   clearTimeout(tGuardarHist); apuntarHistoria();
+  if (PUBLICO) {
+    const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([JSON.stringify(cv, null, 2)], { type: "application/json" })), download: nombreArchivo(" (datos).json") });
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    sucio = false; toast("⬇️ Descargado. Para seguir otro día: 📂 Abrir… y elige ese archivo.", 5000);
+    return;
+  }
   const texto = serializar();
   if (window.showSaveFilePicker) {
     try {
@@ -536,8 +591,8 @@ function hecho(msg) { sucio = false; try { localStorage.removeItem(CLAVE); } cat
 const CLAVE_GH = "cv-jm-github";
 // Lee un datos.js como JSON (sin ejecutar código) y comprueba que parece un CV
 function leerDatosJS(t) {
-  const i = t.indexOf("window.CV"); if (i < 0) throw new Error("sin window.CV");
-  const d = JSON.parse(t.slice(t.indexOf("=", i) + 1, t.lastIndexOf(";")));
+  const i = t.indexOf("window.CV");
+  const d = JSON.parse(i < 0 ? t : t.slice(t.indexOf("=", i) + 1, t.lastIndexOf(";")));
   if (!d || typeof d !== "object" || Array.isArray(d) || typeof d.nombre !== "string" || !d.contacto) throw new Error("no es un CV");
   return d;
 }
@@ -624,8 +679,8 @@ $("#fichero").onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   try {
     const datos = leerDatosJS(await f.text());   // se lee como datos, nunca se ejecuta
-    cv = datos; handle = null; cambio({ refrescarPanel: true }); toast("Cargado " + f.name);
-  } catch (err) { toast("Ese archivo no es un datos.js válido"); }
+    cv = datos; handle = null; cerrarBienvenida(); cambio({ refrescarPanel: true }); toast("Cargado " + f.name);
+  } catch (err) { toast("Ese archivo no es un CV guardado con este editor"); }
   e.target.value = "";
 };
 
@@ -715,7 +770,10 @@ $("#verA4").onclick = () => { const z = $("#marco").getBoundingClientRect().widt
 $("#deshacer").onclick = () => irHistoria(-1);
 $("#rehacer").onclick = () => irHistoria(1);
 $("#guardar").onclick = guardar;
-$("#pdf").onclick = () => { toast("En el diálogo: Guardar como PDF · A4 · Márgenes: ninguno · Gráficos de fondo ✓", 6000); vista.contentWindow.postMessage({ tipo: "imprimir" }, ORIGEN); };
+$("#pdf").onclick = () => {
+  toast("En la ventana que se abre, elige «Guardar como PDF» y pulsa Guardar.", 7000);
+  vista.contentWindow.postMessage({ tipo: "imprimir", titulo: nombreArchivo("") }, ORIGEN);
+};
 $("#ats").onclick = () => { modoATS = !modoATS; $("#ats").classList.toggle("on", modoATS); vista.contentWindow.postMessage({ tipo: "ats", on: modoATS }, ORIGEN); };
 document.addEventListener("keydown", e => {
   if (!(e.ctrlKey || e.metaKey)) return;
@@ -725,14 +783,32 @@ document.addEventListener("keydown", e => {
   if (k === "z" && !enTexto) { e.preventDefault(); irHistoria(e.shiftKey ? 1 : -1); }
   if (k === "y" && !enTexto) { e.preventDefault(); irHistoria(1); }
 });
-window.addEventListener("beforeunload", e => { if (sucio) { e.preventDefault(); e.returnValue = ""; } });
+window.addEventListener("beforeunload", e => { if (sucio && !PUBLICO) { e.preventDefault(); e.returnValue = ""; } });
 
 let tToast;
 function toast(msg, ms = 2500) { const t = $("#toast"); t.textContent = msg; t.classList.add("ver"); clearTimeout(tToast); tToast = setTimeout(() => t.classList.remove("ver"), ms); }
 
 /* ======================= Inicio ======================= */
+/* ---- Bienvenida (modo público) ---- */
+function abrirBienvenida() { const d = $("#bienvenida"); if (!d.open) d.showModal(); }
+function cerrarBienvenida() { const d = $("#bienvenida"); if (d.open) d.close(); }
+function empezar(base) {
+  cv = structuredClone(base); historia = [JSON.stringify(cv)]; pos = 0; botonesHist();
+  abiertos.clear(); abiertos.add("sec-cabecera");
+  cerrarBienvenida(); cambio({ refrescarPanel: true }); sucio = false;
+}
+$("#bienvenida").addEventListener("click", e => {
+  const b = e.target.closest("[data-empezar]"); if (!b) return;
+  if (b.dataset.empezar === "ejemplo") empezar(window.CV_EJEMPLO);
+  if (b.dataset.empezar === "blanco") empezar(window.CV_BLANCO);
+  if (b.dataset.empezar === "abrir") $("#fichero").click();
+});
+// La primera vez no se puede cerrar sin elegir (Esc empezaría con un CV vacío sin querer)
+$("#bienvenida").addEventListener("cancel", e => { if (!guardadoPublico && !localStorage.getItem(CLAVE)) e.preventDefault(); });
+$("#nuevo").onclick = () => abrirBienvenida();
+
 try {
-  const b = JSON.parse(localStorage.getItem(CLAVE) || "null");
+  const b = PUBLICO ? null : JSON.parse(localStorage.getItem(CLAVE) || "null");
   if (b && JSON.stringify(b.cv) !== JSON.stringify(cv)) {
     $("#borrador").classList.add("ver");
     $("#borrador").firstChild.textContent = `Tienes cambios sin guardar del ${new Date(b.fecha).toLocaleString("es-ES")}.`;
@@ -741,8 +817,8 @@ try {
   }
 } catch (e) {}
 construirPanel(); botonesHist(); ajustarZoom();
-if (!window.CV) toast("No se encontró datos.js junto a editor.html", 6000);
-cargarDeGitHub();
+if (PUBLICO) { if (!guardadoPublico) abrirBienvenida(); }
+else { if (!window.CV) toast("No se encontró datos.js junto a editor.html", 6000); cargarDeGitHub(); }
 </script>
 </body>
 </html>

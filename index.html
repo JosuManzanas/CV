@@ -420,8 +420,8 @@
     };
 
     const SECCIONES = {
-      experiencia: () => sec("experiencia", `<h2>Experiencia</h2><div class="linea-tiempo">${experiencia}</div>`),
-      proyectos: () => sec("proyectos", `<h2>Proyectos</h2><div class="linea-tiempo">${proyectos}</div>`),
+      experiencia: () => !cv.experiencia?.length ? "" : sec("experiencia", `<h2>Experiencia</h2><div class="linea-tiempo">${experiencia}</div>`),
+      proyectos: () => !cv.proyectos?.length ? "" : sec("proyectos", `<h2>Proyectos</h2><div class="linea-tiempo">${proyectos}</div>`),
       creatividad: () => cv.creatividad?.items?.length ? sec("creatividad", `<h2>${ed("creatividad.titulo", cv.creatividad.titulo || "Diseño y multimedia")}</h2>
           ${cv.creatividad.texto ? `<p class="desc-sec">${ed("creatividad.texto", cv.creatividad.texto)}</p>` : ""}
           ${chips(cv.creatividad.items, "azul", "creatividad.items")}`, "creatividad") : "",
@@ -494,7 +494,7 @@
     try { history.replaceState(null, "", on ? "?ats" : location.pathname); } catch (e) {}
   }
 
-  render(window.CV);
+  if (!new URLSearchParams(location.search).has("editar")) render(window.CV);
   // En pantalla se ve como página web; al imprimir sigue siendo el A4 de siempre (el editor usa la vista A4)
   const _q = new URLSearchParams(location.search);
   if (!_q.has("editar") && !_q.has("ats")) document.body.classList.add("web");
@@ -686,7 +686,11 @@
         if (f) { f.focus(); getSelection().selectAllChildren(f); }
       }
       if (m.tipo === "ats" && document.body.classList.contains("ats") !== m.on) { alternarATS(); informar(); }
-      if (m.tipo === "imprimir") window.print();
+      if (m.tipo === "imprimir") {
+        // Nombre sugerido del PDF: "CV Nombre Apellido"
+        const t = document.title; if (typeof m.titulo === "string") document.title = m.titulo.slice(0, 120);
+        window.print(); document.title = t;
+      }
     });
     parentMsg({ tipo: "listo" });
   }
