@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Editor de CV · JM</title>
 <meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<style>html.enmarcado body { display: none !important; }</style>
+<script>
+  // Seguridad: el editor no puede abrirse dentro de otra página (evita que te engañen para pulsar "Publicar")
+  if (window.top !== window.self) { document.documentElement.classList.add("enmarcado"); try { window.top.location = window.self.location.href; } catch (e) {} }
+</script>
 <style>
   @font-face { font-family: "Adwaita Sans JM"; src: url("fuentes/AdwaitaSans-Regular.ttf") format("truetype"); font-weight: 100 900; }
   :root {
@@ -198,7 +204,10 @@ const $ = s => document.querySelector(s);
 const vista = $("#vista");
 
 const obtener = (p, o = cv) => p.split(".").reduce((a, k) => (a == null ? a : a[k]), o);
+// Seguridad: solo rutas normales de datos (nada de __proto__, constructor…)
+const rutaValida = p => typeof p === "string" && /^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)*$/.test(p) && !/(^|\.)(__proto__|constructor|prototype)(\.|$)/.test(p);
 function fijar(p, v) {
+  if (!rutaValida(p)) return;
   const ks = p.split("."), ult = ks.pop();
   const obj = ks.reduce((a, k) => (a[k] ??= {}), cv);
   obj[ult] = v;
@@ -230,33 +239,41 @@ function irHistoria(d) {
 function botonesHist() { $("#deshacer").disabled = pos <= 0; $("#rehacer").disabled = pos >= historia.length - 1; }
 
 /* ======================= Vista previa ======================= */
-function enviar(foco) { vista.contentWindow?.postMessage({ tipo: "cv", cv: structuredClone(cv), foco }, "*"); }
+// Destino de los mensajes: la propia web (en local, file:// no tiene origen y hay que usar "*")
+const ORIGEN = location.protocol === "file:" ? "*" : location.origin;
+function enviar(foco) { vista.contentWindow?.postMessage({ tipo: "cv", cv: structuredClone(cv), foco }, ORIGEN); }
 const medidor = document.getElementById("medidor");
 let esperaMedida = null, idMedida = 0;
 window.addEventListener("message", e => {
-  const m = e.data || {};
+  // Seguridad: solo se aceptan mensajes de las dos vistas previas propias (mismo origen)
+  if (e.source !== vista.contentWindow && e.source !== medidor.contentWindow) return;
+  if (location.protocol !== "file:" && e.origin !== location.origin) return;
+  const m = e.data && typeof e.data === "object" ? e.data : {};
+  for (const k of ["p", "grupo"]) if (k in m && !rutaValida(m[k])) return;
   if (e.source === medidor.contentWindow) { if (m.tipo === "altura" && esperaMedida && m.id === idMedida) { const r = esperaMedida; esperaMedida = null; r(m.columnas || []); } return; }
-  if (m.tipo === "listo") { enviar(); vista.contentWindow.postMessage({ tipo: "ats", on: modoATS }, "*"); }
+  if (m.tipo === "listo") { enviar(); vista.contentWindow.postMessage({ tipo: "ats", on: modoATS }, ORIGEN); }
   if (m.tipo === "altura") {
     vista.style.height = Math.max(m.h, 1150) + "px"; ajustarZoom();
     lineaY = m.lineaY;
     $("#aviso").classList.toggle("ver", !!m.desborda);
-    if (m.desborda) $("#aviso-texto").innerHTML = "No cabe en un A4: " + m.columnas.map(c => `la <b>columna ${c.columna}</b> se pasa <b>${c.px} px</b>`).join(" y ") +
+    if (m.desborda) $("#aviso-texto").innerHTML = "No cabe en un A4: " + m.columnas.map(c => `la <b>columna ${esc(c.columna)}</b> se pasa <b>${+c.px || 0} px</b>`).join(" y ") +
       ". Lo que no cabe está <b style='color:#d42a52'>marcado en rojo</b> en el CV, debajo de la línea «Fin del A4».";
   }
   if (m.tipo === "mover") {
     const lista = obtener(m.grupo);
-    if (!Array.isArray(lista)) return;
+    if (!Array.isArray(lista) || !Number.isInteger(m.de) || !Number.isInteger(m.a) || m.de < 0 || m.de >= lista.length || m.a < 0 || m.a >= lista.length) return;
     const [x] = lista.splice(m.de, 1); lista.splice(m.a, 0, x);
     return cambio({ refrescarPanel: true });
   }
   if (m.tipo === "espacio") {
+    if (!rutaValida(m.id) || !Number.isFinite(m.arriba)) return;
     ((cv.estilo ??= {}).secciones ??= {})[m.id] = { ...(cv.estilo.secciones[m.id] || {}), arriba: m.arriba };
     return cambio({ refrescarPanel: true });
   }
   if (m.tipo === "verSeccion") {
     abiertos.add("sec-dis"); abiertos.add("dis-" + m.id); construirPanel();
-    document.querySelector(`[data-k="dis-${m.id}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!rutaValida(m.id)) return;
+    document.querySelector(`[data-k="dis-${CSS.escape(m.id)}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
   if (m.tipo === "verQR") {
@@ -264,18 +281,23 @@ window.addEventListener("message", e => {
     [...document.querySelectorAll('[data-k="sec-contacto"] .subt')].find(d => d.textContent === "Código QR")?.scrollIntoView({ behavior: "smooth", block: "start" });
     return;
   }
-  if (m.tipo === "orden") { (cv.estilo ??= {}).orden = m.orden; return cambio({ refrescarPanel: true }); }
+  if (m.tipo === "orden") {
+    const ok = l => Array.isArray(l) && l.every(id => typeof id === "string" && rutaValida(id));
+    if (!m.orden || !ok(m.orden.principal) || !ok(m.orden.lateral)) return;
+    (cv.estilo ??= {}).orden = { principal: [...m.orden.principal], lateral: [...m.orden.lateral] }; return cambio({ refrescarPanel: true }); }
   if (m.tipo === "anadir") {
     const arr = obtener(m.p) || (fijar(m.p, []), obtener(m.p));
+    if (!Array.isArray(arr)) return;
     arr.push("Nueva");
     return cambio({ refrescarPanel: true, foco: `${m.p}.${arr.length - 1}` });
   }
   if (m.tipo === "borrar") {
     const ks = m.p.split("."), i = +ks.pop(), arr = obtener(ks.join("."));
-    if (Array.isArray(arr) && i < arr.length) { arr.splice(i, 1); cambio({ refrescarPanel: true }); }
+    if (Array.isArray(arr) && Number.isInteger(i) && i >= 0 && i < arr.length) { arr.splice(i, 1); cambio({ refrescarPanel: true }); }
     return;
   }
   if (m.tipo === "editar") {
+    if (typeof m.valor !== "string") return;
     fijar(m.p, m.valor);
     sincronizarCampo(m.p);
     sucio = true;
@@ -510,6 +532,17 @@ function hecho(msg) { sucio = false; try { localStorage.removeItem(CLAVE); } cat
 
 /* ======================= Publicar en GitHub (para usar el editor online) ======================= */
 const CLAVE_GH = "cv-jm-github";
+// Lee un datos.js como JSON (sin ejecutar código) y comprueba que parece un CV
+function leerDatosJS(t) {
+  const i = t.indexOf("window.CV"); if (i < 0) throw new Error("sin window.CV");
+  const d = JSON.parse(t.slice(t.indexOf("=", i) + 1, t.lastIndexOf(";")));
+  if (!d || typeof d !== "object" || Array.isArray(d) || typeof d.nombre !== "string" || !d.contacto) throw new Error("no es un CV");
+  return d;
+}
+// Seguridad: formato estricto de repositorio y archivo antes de hablar con GitHub
+const repoValido = r => /^[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}$/.test(r) && !/\.\./.test(r);
+const rutaGHValida = r => /^([A-Za-z0-9._-]+\/)*datos[A-Za-z0-9._-]*\.js$/.test(r) && !/(^|\/)\.\.?(\/|$)/.test(r);
+const ramaValida = r => /^[A-Za-z0-9._\/-]{1,100}$/.test(r) && !/\.\./.test(r);
 const leerGH = () => {
   let c = {}; try { c = JSON.parse(localStorage.getItem(CLAVE_GH) || "{}"); } catch (e) {}
   try { c.token ||= sessionStorage.getItem(CLAVE_GH + "-token") || ""; } catch (e) {}
@@ -555,6 +588,7 @@ $("#gh-olvidar").onclick = () => {
 async function publicar() {
   const c = leerGH();
   if (!c.repo || !c.token) return configurarGH(true);
+  if (!repoValido(c.repo) || !rutaGHValida(c.ruta) || !ramaValida(c.rama)) { toast("⚠️ Revisa el repositorio, la rama o el archivo (debe ser un datos….js)", 6000); return configurarGH(true); }
   clearTimeout(tGuardarHist); apuntarHistoria();
   const b = $("#publicar"); b.disabled = true; b.textContent = "☁️ Publicando…";
   try {
@@ -573,12 +607,10 @@ $("#ajustes-gh").onclick = () => configurarGH();
 
 // Online, GitHub Pages guarda en caché datos.js unos minutos: al abrir el editor se carga la última versión publicada
 async function cargarDeGitHub() {
-  const c = leerGH(); if (!c.repo || !c.token) return;
+  const c = leerGH(); if (!c.repo || !c.token || !repoValido(c.repo) || !rutaGHValida(c.ruta) || !ramaValida(c.rama)) return;
   try {
     const r = await apiGH(c, "GET", undefined, true); if (!r.ok) return;
-    const t = await r.text(); if (!t.includes("window.CV")) return;
-    const i = t.indexOf("window.CV"), json = t.slice(t.indexOf("=", i) + 1, t.lastIndexOf(";"));
-    const nuevo = JSON.parse(json);
+    const nuevo = leerDatosJS(await r.text());
     if (JSON.stringify(nuevo) === JSON.stringify(window.CV) || sucio || $("#borrador").classList.contains("ver")) return;
     cv = nuevo; historia = [JSON.stringify(cv)]; pos = 0; botonesHist();
     enviar(); construirPanel();
@@ -589,9 +621,8 @@ $("#abrir").onclick = () => $("#fichero").click();
 $("#fichero").onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   try {
-    const w = {}; new Function("window", await f.text())(w);
-    if (!w.CV) throw new Error();
-    cv = w.CV; handle = null; cambio({ refrescarPanel: true }); toast("Cargado " + f.name);
+    const datos = leerDatosJS(await f.text());   // se lee como datos, nunca se ejecuta
+    cv = datos; handle = null; cambio({ refrescarPanel: true }); toast("Cargado " + f.name);
   } catch (err) { toast("Ese archivo no es un datos.js válido"); }
   e.target.value = "";
 };
@@ -603,7 +634,7 @@ let lineaY = 0;
 // Prueba cambios en una copia invisible del CV y devuelve solo los que hacen que quepa en el A4
 const medir = cand => new Promise(res => {
   esperaMedida = res; idMedida++;
-  medidor.contentWindow.postMessage({ tipo: "cv", cv: structuredClone(cand), id: idMedida }, "*");
+  medidor.contentWindow.postMessage({ tipo: "cv", cv: structuredClone(cand), id: idMedida }, ORIGEN);
   setTimeout(() => { if (esperaMedida === res) { esperaMedida = null; res(null); } }, 2500);
 });
 const ORDEN_DEF = { principal: ["experiencia", "proyectos", "creatividad"], lateral: ["contacto", "competencias", "formacion", "idiomas"] };
@@ -682,8 +713,8 @@ $("#verA4").onclick = () => { const z = $("#marco").getBoundingClientRect().widt
 $("#deshacer").onclick = () => irHistoria(-1);
 $("#rehacer").onclick = () => irHistoria(1);
 $("#guardar").onclick = guardar;
-$("#pdf").onclick = () => { toast("En el diálogo: Guardar como PDF · A4 · Márgenes: ninguno · Gráficos de fondo ✓", 6000); vista.contentWindow.postMessage({ tipo: "imprimir" }, "*"); };
-$("#ats").onclick = () => { modoATS = !modoATS; $("#ats").classList.toggle("on", modoATS); vista.contentWindow.postMessage({ tipo: "ats", on: modoATS }, "*"); };
+$("#pdf").onclick = () => { toast("En el diálogo: Guardar como PDF · A4 · Márgenes: ninguno · Gráficos de fondo ✓", 6000); vista.contentWindow.postMessage({ tipo: "imprimir" }, ORIGEN); };
+$("#ats").onclick = () => { modoATS = !modoATS; $("#ats").classList.toggle("on", modoATS); vista.contentWindow.postMessage({ tipo: "ats", on: modoATS }, ORIGEN); };
 document.addEventListener("keydown", e => {
   if (!(e.ctrlKey || e.metaKey)) return;
   const k = e.key.toLowerCase();

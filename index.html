@@ -348,7 +348,8 @@
       `<button class="chip-x" data-borrar="${p}.${i}" title="Quitar">×</button>` : esc(t)}</li>`).join("")}${
       p ? `<li class="chip-mas"><button data-anadir="${p}" title="Añadir etiqueta">+ Añadir</button></li>` : ""}</ul>
                                     <p class="solo-ats">${arr.map(esc).join(", ")}.</p>`;
-  const url = s => (s.startsWith("http") ? s : "https://" + s);
+  // Solo enlaces http(s): cualquier otra cosa (javascript:, data:…) se trata como texto de una web
+  const url = s => (/^https?:\/\//i.test(s) ? s : "https://" + String(s).replace(/^[a-z][a-z0-9+.-]*:\/*/i, ""));
   // Código QR en SVG (librería qrcode-generator; si no carga, simplemente no se muestra)
   function qrSVG(texto) {
     if (!window.qrcode || !texto) return "";
@@ -414,9 +415,9 @@
       email:     c.email     && `<li>${ico("mail")}<a href="mailto:${esc(c.email)}">${ed("contacto.email", c.email)}</a></li>`,
       telefono:  c.telefono  && `<li>${ico("tel")}<a href="tel:${esc(c.telefono.replace(/\s/g, ""))}">${ed("contacto.telefono", c.telefono)}</a></li>`,
       ubicacion: c.ubicacion && `<li>${ico("pin")}${ed("contacto.ubicacion", c.ubicacion)}</li>`,
-      linkedin:  c.linkedin  && `<li>${ico("in", "azul")}<a href="${url(c.linkedin)}">${ed("contacto.linkedin", c.linkedin)}</a></li>`,
-      github:    c.github    && `<li>${ico("gh", "azul")}<a href="${url(c.github)}">${ed("contacto.github", c.github)}</a></li>`,
-      web:       c.web       && `<li>${ico("web", "azul")}<a href="${url(c.web)}">${ed("contacto.web", c.web)}</a></li>`
+      linkedin:  c.linkedin  && `<li>${ico("in", "azul")}<a href="${esc(url(c.linkedin))}" rel="noopener">${ed("contacto.linkedin", c.linkedin)}</a></li>`,
+      github:    c.github    && `<li>${ico("gh", "azul")}<a href="${esc(url(c.github))}" rel="noopener">${ed("contacto.github", c.github)}</a></li>`,
+      web:       c.web       && `<li>${ico("web", "azul")}<a href="${esc(url(c.web))}" rel="noopener">${ed("contacto.web", c.web)}</a></li>`
     };
     // Con el QR dentro de Contacto, las líneas cortas van primero para dejarle hueco
     const contacto = (posQR === "contacto" ? ["telefono", "ubicacion", "web", "email", "linkedin", "github"] : ["email", "telefono", "ubicacion", "linkedin", "github", "web"])
@@ -432,7 +433,7 @@
     const proyectos = cv.proyectos.map((p, n) => `
       <article class="item ${p.color}" ${arr("proyectos", n)}>
         <div class="item-cab"><h3>${ed(`proyectos.${n}.nombre`, p.nombre)}</h3><span class="fecha">${ed(`proyectos.${n}.fecha`, p.fecha)}</span></div>
-        <p class="desc">${ed(`proyectos.${n}.descripcion`, p.descripcion)}${p.enlace ? ` <a class="link" href="${url(p.enlace)}">${esc(p.enlace.replace(/^https?:\/\//, ""))}</a>` : ""}</p>
+        <p class="desc">${ed(`proyectos.${n}.descripcion`, p.descripcion)}${p.enlace ? ` <a class="link" href="${esc(url(p.enlace))}" rel="noopener">${esc(p.enlace.replace(/^https?:\/\//, ""))}</a>` : ""}</p>
         ${chips(p.etiquetas, "", `proyectos.${n}.etiquetas`)}
       </article>`).join("");
 
@@ -443,7 +444,7 @@
     const idiomas = cv.idiomas.map((i, n) => `
       <div class="idioma" ${arr("idiomas", n)}>
         <div class="idioma-cab"><strong>${ed(`idiomas.${n}.idioma`, i.idioma)}</strong>${ed(`idiomas.${n}.nivel`, i.nivel)}</div>
-        <div class="barra-nivel"><i style="width:${i.porcentaje}%"></i></div>
+        <div class="barra-nivel"><i style="width:${Math.max(0, Math.min(100, +i.porcentaje || 0))}%"></i></div>
       </div>`).join("");
 
     const lista = (g, xs, extra = "") => `<ul class="lista"${extra}>${xs.map((x, j) => `<li ${arr(g, j)}>${ed(`${g}.${j}`, x)}</li>`).join("")}</ul>`;
@@ -539,6 +540,10 @@
 
   /* ---- Modo edición: lo usa editor.html (?editar) ---- */
   if (new URLSearchParams(location.search).has("editar")) {
+    // Seguridad: los mensajes solo van a / vienen de la ventana que contiene esta vista (el editor)
+    const ORIGEN = location.protocol === "file:" ? "*" : location.origin;
+    const _post = parent.postMessage.bind(parent);
+    const parentMsg = m => { if (parent !== window) _post(m, ORIGEN); };
     document.body.classList.add("editando");
     // Mide como quedará impreso (sin los botones del editor) y marca en rojo lo que no cabe en el A4
     const lineaA4 = Object.assign(document.createElement("div"), { className: "linea-a4", innerHTML: "<span>Fin del A4</span>" });
@@ -561,7 +566,7 @@
       document.body.classList.remove("midiendo");
       Object.assign(lineaA4.style, { top: limite + scrollY + "px", left: rh.left + scrollX + "px", width: rh.width + "px" });
       lineaA4.classList.toggle("alerta", columnas.length > 0);
-      parent.postMessage({ tipo: "altura", h: document.documentElement.scrollHeight, desborda: columnas.length > 0, columnas, lineaY: limite + scrollY, id: window._idMedida }, "*");
+      parentMsg({ tipo: "altura", h: document.documentElement.scrollHeight, desborda: columnas.length > 0, columnas, lineaY: limite + scrollY, id: window._idMedida });
     });
     const activar = () => {
       document.querySelectorAll("[data-p]").forEach(el => el.contentEditable = "plaintext-only");
@@ -573,16 +578,16 @@
     document.addEventListener("click", e => {
       if (e.target.closest("a")) e.preventDefault();
       const b = e.target.closest("[data-borrar],[data-anadir]");
-      if (b) { e.preventDefault(); parent.postMessage(b.dataset.borrar ? { tipo: "borrar", p: b.dataset.borrar } : { tipo: "anadir", p: b.dataset.anadir }, "*"); }
+      if (b) { e.preventDefault(); parentMsg(b.dataset.borrar ? { tipo: "borrar", p: b.dataset.borrar } : { tipo: "anadir", p: b.dataset.anadir }); }
     });
     // Etiqueta vaciada = se quita
     document.addEventListener("focusout", e => {
       const el = e.target.closest(".chips [data-p]");
-      if (el && !el.textContent.trim()) parent.postMessage({ tipo: "borrar", p: el.dataset.p }, "*");
+      if (el && !el.textContent.trim()) parentMsg({ tipo: "borrar", p: el.dataset.p });
     });
     document.addEventListener("input", e => {
       const el = e.target.closest("[data-p]");
-      if (el) { parent.postMessage({ tipo: "editar", p: el.dataset.p, valor: el.textContent }, "*"); informar(); }
+      if (el) { parentMsg({ tipo: "editar", p: el.dataset.p, valor: el.textContent }); informar(); }
     });
     document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.closest("[data-p]")) { e.preventDefault(); e.target.blur(); } });
     /* ---- Arrastrar y soltar: secciones, experiencias, proyectos, tareas, chips, cursos… ---- */
@@ -645,18 +650,18 @@
       if (!asa) return;
       const { h, sec, valor } = asa; asa = null;
       h.classList.remove("activa"); h.textContent = "↕"; document.body.classList.remove("moviendo");
-      if (valor != null) parent.postMessage({ tipo: "espacio", id: sec.dataset.id, arriba: valor }, "*");
+      if (valor != null) parentMsg({ tipo: "espacio", id: sec.dataset.id, arriba: valor });
       informar();
     });
     // Clic en el QR (no en sus textos): abre sus opciones en el panel
     document.addEventListener("click", e => {
       const q = e.target.closest(".qr, .qr-cab, .qr-final");
-      if (q && !e.target.closest("[data-p]")) { e.preventDefault(); parent.postMessage({ tipo: "verQR" }, "*"); }
+      if (q && !e.target.closest("[data-p]")) { e.preventDefault(); parentMsg({ tipo: "verQR" }); }
     });
     // Clic en el título de una sección: la abre en el panel
     document.addEventListener("click", e => {
       const h2 = e.target.closest("section[data-drag] > h2");
-      if (h2 && !document.body.classList.contains("moviendo")) parent.postMessage({ tipo: "verSeccion", id: h2.parentElement.dataset.id }, "*");
+      if (h2 && !document.body.classList.contains("moviendo")) parentMsg({ tipo: "verSeccion", id: h2.parentElement.dataset.id });
     });
 
     document.addEventListener("pointerdown", e => {
@@ -684,20 +689,22 @@
       el.classList.remove("arrastrando");
       document.body.classList.remove("moviendo");
       if (!activo || !d) return;
-      if (d.tipo === "mover" && d.de !== d.a) parent.postMessage(d, "*");
+      if (d.tipo === "mover" && d.de !== d.a) parentMsg(d);
       if (d.tipo === "seccion") {
         const ids = c => [...document.querySelector(`[data-col="${c}"]`).querySelectorAll(":scope > section[data-drag=sec]")].map(s => s.dataset.id).filter(id => id !== el.dataset.id);
         const orden = { principal: ids("principal"), lateral: ids("lateral") };
         const lista = orden[d.col.dataset.col];
         const i = d.antes ? lista.indexOf(d.antes.dataset.id) : lista.length;
         lista.splice(i, 0, el.dataset.id);
-        parent.postMessage({ tipo: "orden", orden }, "*");
+        parentMsg({ tipo: "orden", orden });
       }
     });
     // Evita que el clic que cierra un arrastre active la edición de texto
     document.addEventListener("click", e => { if (document.body.classList.contains("moviendo")) e.preventDefault(); }, true);
     window.addEventListener("message", e => {
-      const m = e.data || {};
+      if (e.source !== parent || parent === window) return;
+      if (location.protocol !== "file:" && e.origin !== location.origin) return;
+      const m = e.data && typeof e.data === "object" ? e.data : {};
       if (m.tipo === "cv") {
         window._idMedida = m.id;
         render(m.cv); activar();
@@ -707,7 +714,7 @@
       if (m.tipo === "ats" && document.body.classList.contains("ats") !== m.on) { alternarATS(); informar(); }
       if (m.tipo === "imprimir") window.print();
     });
-    parent.postMessage({ tipo: "listo" }, "*");
+    parentMsg({ tipo: "listo" });
   }
 </script>
 </body>
