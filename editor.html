@@ -518,6 +518,7 @@ function construirPanel() {
     seccion("sec-idi", "Idiomas y otros", "#D3BC5F", lista("idiomas") + campo("otros", "Otros (carnets, acreditaciones…)", "lineas", "uno por línea")),
     seccion("sec-dis", "Diseño de página", "#FF4064",
       `<div class="subt">General</div>
+       ${campo("estilo.lateral", "Columna lateral (contacto, formación, idiomas…)", "opciones", [[["derecha", "▮▯ A la derecha"], ["izquierda", "▯▮ A la izquierda"]], "derecha"])}
        ${campo("estilo.k", "Tamaño de letra", "desliz", [0.85, 1.15, 0.01, 1, "pct"])}
        ${campo("estilo.lh", "Interlineado", "desliz", [1.2, 1.7, 0.01, 1.42, "lh"])}
        ${campo("estilo.es", "Espacio entre secciones (todas)", "desliz", [0, 2.5, 0.05, 1, "pct"])}

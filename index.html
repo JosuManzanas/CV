@@ -63,6 +63,10 @@
   section[data-drag] { margin-top: var(--arriba, 0px); }
   .principal .item { padding-bottom: calc(14px * var(--ei)); }
   .lateral { border-left: 1px solid var(--linea); padding-left: calc(var(--sc) * 7 / 13); min-width: 0; }
+  /* Opción: columna lateral a la izquierda */
+  .hoja.lat-izq { grid-template-columns: var(--al) 1fr; }
+  .hoja.lat-izq .cab-total { order: -2; }
+  .hoja.lat-izq .lateral { order: -1; border-left: 0; padding-left: 0; border-right: 1px solid var(--linea); padding-right: calc(var(--sc) * 7 / 13); }
 
   /* cabecera */
   h1 { font: 800 calc(26pt * var(--k))/1.05 var(--fuente); color: var(--azul); letter-spacing: -1px; overflow-wrap: anywhere; }
@@ -203,7 +207,7 @@
 
   /* ---------- MODO ATS: una columna, sin adornos, texto lineal ---------- */
   body.ats .hoja { display: block; padding: 14mm 16mm; }
-  body.ats .lateral { border: 0; padding: 0; }
+  body.ats .lateral, body.ats .hoja.lat-izq .lateral { border: 0; padding: 0; }
   body.ats h1 { font: 700 calc(22pt * var(--k)) var(--fuente); letter-spacing: 0; }
   body.ats h2 { letter-spacing: .06em; font-size: calc(11pt * var(--k)); margin: 14px 0 6px; }
   body.ats .lateral h2 { margin-top: 14px; }
@@ -241,7 +245,7 @@
   /* ---------- pantalla estrecha (móvil) ---------- */
   @media screen and (max-width: 820px) {
     body:not(.web) .hoja { width: auto; min-height: 0; margin: 12px 16px 24px; padding: 22px 18px; display: block; }
-    body:not(.web) .lateral { border-left: 0; padding-left: 0; }
+    body:not(.web) .lateral { border-left: 0; padding-left: 0; border-right: 0; padding-right: 0; }
     body:not(.web) h1 { font-size: calc(26pt * var(--k)); white-space: normal; }
     body:not(.web) .item-cab { flex-direction: column; gap: 0; }
   }
@@ -261,7 +265,8 @@
     .hoja { margin: 0; box-shadow: none; width: 210mm; height: 297mm; min-height: 0; overflow: hidden; display: grid; padding: calc(var(--mt) * var(--mp)) calc(var(--mr) * var(--mp)) calc(var(--mb) * var(--mp)) calc(var(--ml) * var(--mp)); }
     body.ats .hoja { display: block; height: auto; overflow: visible; padding: 14mm 16mm; }
     .lateral { border-left: 1px solid var(--linea); padding-left: calc(var(--sc) * 7 / 13); }
-    body.ats .lateral { border: 0; padding: 0; }
+    .hoja.lat-izq .lateral { border-left: 0; padding-left: 0; border-right: 1px solid var(--linea); padding-right: calc(var(--sc) * 7 / 13); }
+    body.ats .lateral, body.ats .hoja.lat-izq .lateral { border: 0; padding: 0; }
     .item, .form, .idioma { break-inside: avoid; }
     /* El PDF visual es siempre UNA hoja A4: nada del editor debe empujar el contenido */
     html, body { margin: 0 !important; padding: 0 !important; }
@@ -471,6 +476,7 @@
 
     const hoja = document.getElementById("cv");
     hoja.classList.toggle("lt-color", est.lineaTiempo === "color");
+    hoja.classList.toggle("lat-izq", est.lateral === "izquierda");
     const nombreHtml = `<h1>${ed("nombre", cv.nombre)}${cv.apellido1 ? " " + ed("apellido1", cv.apellido1) : ""}${cv.apellido2 ? " " + ed("apellido2", cv.apellido2) : ""}</h1>
           <p class="titular">${ed("titular", cv.titular)}</p>`;
     hoja.classList.toggle("con-cabecera", enCab);
@@ -534,7 +540,8 @@
       document.querySelectorAll(".no-cabe").forEach(el => el.classList.remove("no-cabe"));
       const hoja = document.querySelector(".hoja"), rh = hoja.getBoundingClientRect();
       const limite = rh.top + 1122.5 - parseFloat(getComputedStyle(hoja).paddingBottom);
-      const columnas = [["izquierda", ".principal"], ["derecha", ".lateral"]].map(([nombre, sel]) => {
+      const izq = document.querySelector(".hoja").classList.contains("lat-izq");
+      const columnas = [[izq ? "derecha" : "izquierda", ".principal"], [izq ? "izquierda" : "derecha", ".lateral"]].map(([nombre, sel]) => {
         const col = document.querySelector(sel); if (!col) return null;
         const fondo = Math.max(...[...col.children].map(e => e.getBoundingClientRect().bottom), col.getBoundingClientRect().top);
         const px = Math.ceil(fondo - limite);
