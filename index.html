@@ -340,7 +340,7 @@
   const ESTILO = { k: 1, es: 1, ei: 1, lh: 1.42, mp: 1, al: 67, mt: 12, mr: 11, mb: 10, ml: 13, sc: 13, qr: 15, qc: 24, qf: 15 };
   const EN_MM = ["al", "mt", "mr", "mb", "ml", "sc", "qr", "qc", "qf"];
   // Orden por defecto de las secciones en cada columna
-  const ORDEN = { principal: ["experiencia", "proyectos", "creatividad"], lateral: ["contacto", "competencias", "formacion", "idiomas"] };
+  const ORDEN = { principal: ["experiencia", "proyectos", "creatividad"], lateral: ["contacto", "competencias", "formacion", "idiomas", "otros"] };
 
   function render(cv) {
     if (!cv || typeof cv !== "object" || !cv.contacto) return;
@@ -452,8 +452,11 @@
       idiomas: () => sec("idiomas", `
           <h2>Idiomas</h2>
           ${idiomas}
-          <p class="solo-ats">${cv.idiomas.map(i => `${esc(i.idioma)}: ${esc(i.nivel)}`).join(" · ")}</p>
-          ${cv.otros.length ? lista("otros", cv.otros, ' style="margin-top:6px"') : ""}`)
+          <p class="solo-ats">${cv.idiomas.map(i => `${esc(i.idioma)}: ${esc(i.nivel)}`).join(" · ")}</p>`),
+      // Carnets y acreditaciones: sección propia (antes iba dentro de Idiomas)
+      otros: () => cv.otros?.length ? sec("otros", `
+          <h2>${ed("otrosTitulo", cv.otrosTitulo || "Carnets y acreditaciones")}</h2>
+          ${lista("otros", cv.otros)}`) : ""
     };
 
     const colorSec = {};
@@ -470,7 +473,7 @@
 
     // Línea de los títulos: "alterna" va rotando los colores de la marca en cada columna; cada sección puede fijar el suyo
     const ciclo = ["azul", "coral", "oro"];
-    [izq, der].forEach(columna => columna.filter(id => id !== "creatividad" || cv.creatividad?.items?.length).forEach((id, i) => {
+    [izq, der].forEach(columna => columna.filter(id => (id !== "creatividad" || cv.creatividad?.items?.length) && (id !== "otros" || cv.otros?.length)).forEach((id, i) => {
       colorSec[id] = (est.secciones || {})[id]?.color || (est.lineaSecciones === "alterna" ? ciclo[i % 3] : "");
     }));
 

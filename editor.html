@@ -433,7 +433,7 @@ const ESQUEMAS = {
 };
 
 const SECCIONES_CV = [["contacto", "Contacto"], ["experiencia", "Experiencia"], ["proyectos", "Proyectos"], ["creatividad", PUBLICO ? "Herramientas y extras" : "Diseño y multimedia"],
-  ["competencias", "Competencias"], ["formacion", "Formación"], ["idiomas", "Idiomas"]];
+  ["competencias", "Competencias"], ["formacion", "Formación"], ["idiomas", "Idiomas"], ["otros", "Carnets y acreditaciones"]];
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 function campo(p, etiqueta, tipo = "texto", ayuda = "") {
@@ -515,7 +515,9 @@ function construirPanel() {
       `${campo("competencias.tecnicas", "Técnicas", "lineas", "una por línea")}${campo("competencias.iaTitulo", "Título del grupo extra", "texto", "p. ej. IA, Software, Idiomas técnicos")}${campo("competencias.ia", "Grupo extra", "lineas", "una por línea · vacío = se oculta")}${campo("competencias.transversales", "Transversales", "lineas", "una por línea")}
        ${campo("competencias.nociones", "Nota bajo técnicas", "texto", "vacío = se oculta")}`),
     seccion("sec-form", "Formación y cursos", "#FF4064", lista("formacion") + campo("cursos", "Cursos complementarios", "lineas", "uno por línea")),
-    seccion("sec-idi", "Idiomas y otros", "#D3BC5F", lista("idiomas") + campo("otros", "Otros (carnets, acreditaciones…)", "lineas", "uno por línea")),
+    seccion("sec-idi", "Idiomas", "#D3BC5F", lista("idiomas")),
+    seccion("sec-otros", "Carnets y acreditaciones", "#202080",
+      `${campo("otrosTitulo", "Título de la sección", "texto", "vacío = «Carnets y acreditaciones»")}${campo("otros", "Carnets, acreditaciones…", "lineas", "uno por línea · vacío = se oculta la sección")}`),
     seccion("sec-dis", "Diseño de página", "#FF4064",
       `<div class="subt">General</div>
        ${campo("estilo.lateral", "Columna lateral (contacto, formación, idiomas…)", "opciones", [[["derecha", "▮▯ A la derecha"], ["izquierda", "▯▮ A la izquierda"]], "derecha"])}
@@ -776,7 +778,7 @@ const medir = cand => new Promise(res => {
   medidor.contentWindow.postMessage({ tipo: "cv", cv: structuredClone(cand), id: idMedida }, ORIGEN);
   setTimeout(() => { if (esperaMedida === res) { esperaMedida = null; res(null); } }, 2500);
 });
-const ORDEN_DEF = { principal: ["experiencia", "proyectos", "creatividad"], lateral: ["contacto", "competencias", "formacion", "idiomas"] };
+const ORDEN_DEF = { principal: ["experiencia", "proyectos", "creatividad"], lateral: ["contacto", "competencias", "formacion", "idiomas", "otros"] };
 const NOMBRES = Object.fromEntries(SECCIONES_CV);
 const ordenActual = c => {
   const o = c.estilo?.orden || {};

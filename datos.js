@@ -164,11 +164,13 @@ window.CV = {
       "porcentaje": 100
     }
   ],
+  "otrosTitulo": "Acreditaciones",
   "otros": [
     "Acreditación de carretillero",
     "Carnet de conducir B (en proceso)"
   ],
   "estilo": {
+    "k": 0.975,
     "tituloColor": "coral",
     "lineaSecciones": "alterna",
     "lineaTiempo": "color",
