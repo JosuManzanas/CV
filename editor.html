@@ -669,7 +669,10 @@ const ramaValida = r => /^[A-Za-z0-9._\/-]{1,100}$/.test(r) && !/\.\./.test(r);
 const leerGH = () => {
   let c = {}; try { c = JSON.parse(localStorage.getItem(CLAVE_GH) || "{}"); } catch (e) {}
   try { c.token ||= sessionStorage.getItem(CLAVE_GH + "-token") || ""; } catch (e) {}
-  return { repo: c.repo || "", rama: c.rama || "main", ruta: c.ruta || "datos.js", token: c.token || "", recordar: !!c.recordar };
+  // En GitHub Pages (usuario.github.io/repo/) el repositorio se deduce de la propia dirección
+  const deducido = /\.github\.io$/i.test(location.hostname) && location.pathname.split("/")[1]
+    ? location.hostname.split(".")[0] + "/" + location.pathname.split("/")[1] : "";
+  return { repo: c.repo || deducido, rama: c.rama || "main", ruta: c.ruta || "datos.js", token: c.token || "", recordar: !!c.recordar };
 };
 function escribirGH(c) {
   try {
