@@ -148,7 +148,9 @@
   .lista-form li { margin-bottom: calc(4px * var(--ei)) !important; }
   .lista-form .lf-t { display: block; color: var(--texto); font-weight: 500; }
   .lf-fila { display: flex; justify-content: space-between; column-gap: 8px; }
-  body.editando .lista-form [data-parte]:empty::before { content: "…"; color: var(--suave); }
+  /* Hueco vacío para escribir (p. ej. la fecha): solo se ve al pasar el ratón o al escribir */
+  body.editando .lista-form li:is(:hover, :focus-within) [data-parte]:empty::before { content: "…"; color: var(--suave); }
+  body.editando .lista-form [data-parte]:empty { display: inline-block; min-width: 1.2em; }
   .lateral .form { margin-bottom: calc(4px * var(--ei)); }
   .contacto li { margin-bottom: calc(4px * var(--ei)); }
   /* QR en Contacto (a la derecha de las líneas cortas) */

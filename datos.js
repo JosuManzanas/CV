@@ -168,7 +168,7 @@ window.CV = {
   ],
   "otrosTitulo": "Acreditaciones",
   "otros": [
-    "Acreditación de carretillero",
+    "Acreditación de carretillero (2021)",
     "Carnet de conducir B (cursando)"
   ],
   "estilo": {
