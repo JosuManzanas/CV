@@ -526,8 +526,8 @@ function construirPanel() {
     seccion("sec-comp", "Competencias", "#202080",
       `${campo("competencias.tecnicas", "Técnicas", "lineas", "una por línea")}${campo("competencias.iaTitulo", "Título del grupo extra", "texto", "p. ej. IA, Software, Idiomas técnicos")}${campo("competencias.ia", "Grupo extra", "lineas", "una por línea · vacío = se oculta")}${campo("competencias.transversales", "Actitudes", "lineas", "una por línea")}
        ${campo("competencias.nociones", "Nota bajo técnicas", "texto", "vacío = se oculta")}`),
-    seccion("sec-form", "Formación y cursos", "#FF4064", lista("formacion") + campo("cursosTitulo", "Título de los cursos", "texto", "vacío = «Cursos complementarios»") + campo("cursos", "Cursos", "lineas", "uno por línea") +
-      `${campo("otrosTitulo", "Título de carnets y acreditaciones", "texto", "vacío = «Carnets y acreditaciones»")}${campo("otros", "Carnets, acreditaciones…", "lineas", "uno por línea · vacío = no se muestra")}`),
+    seccion("sec-form", "Formación y cursos", "#FF4064", lista("formacion") + campo("cursosTitulo", "Título de los cursos", "texto", "vacío = «Cursos complementarios»") + campo("cursos", "Cursos", "lineas", "uno por línea · Nombre — Centro · horas (año)") +
+      `${campo("otrosTitulo", "Título de carnets y acreditaciones", "texto", "vacío = «Carnets y acreditaciones»")}${campo("otros", "Carnets, acreditaciones…", "lineas", "uno por línea · lo de (paréntesis) va a la derecha · vacío = no se muestra")}`),
     seccion("sec-idi", "Idiomas", "#D3BC5F", lista("idiomas")),
     seccion("sec-dis", "Diseño de página", "#FF4064",
       `<div class="subt">General</div>

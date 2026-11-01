@@ -143,6 +143,12 @@
   .lateral .chips { gap: 3px; margin-top: 4px; }
   .lateral .chips li { padding: 1.5px 6px; }
   .lateral .lista li { margin-bottom: calc(1px * var(--ei)); }
+  .lista-form li { margin-bottom: calc(4px * var(--ei)) !important; }
+  .lista-form .lf-t { display: block; color: var(--texto); font-weight: 500; }
+  .lista-form .form-sub { font-size: calc(7.8pt * var(--k)); color: var(--suave); }
+  .lf-fila { display: flex; justify-content: space-between; column-gap: 8px; }
+  .lf-fila .form-fecha { font-size: calc(7.8pt * var(--k)); color: var(--suave); }
+  body.editando .lista-form [data-parte]:empty::before { content: "…"; color: var(--suave); }
   .lateral .form { margin-bottom: calc(4px * var(--ei)); }
   .contacto li { margin-bottom: calc(4px * var(--ei)); }
   /* QR en Contacto (a la derecha de las líneas cortas) */
@@ -246,7 +252,8 @@
   body.ats .contacto { display: flex; flex-wrap: wrap; gap: 4px 16px; }
   body.ats .contacto li { margin: 0; }
   body.ats .form { display: block; }
-  body.ats .form-sub { display: block; } body.ats .form-sub > span + .form-fecha::before { content: " · "; }
+  body.ats .form-sub, body.ats .lf-fila { display: block; } body.ats :is(.form-sub, .lf-fila) > span + .form-fecha:not(:empty)::before { content: " · "; }
+  body.ats .lista-form .lf-t { display: inline; font-weight: 400; } body.ats .lista-form .lf-t + .form-sub { display: inline; } body.ats .lista-form .lf-t + .form-sub::before { content: " — "; }
   body.ats .lista li::before { content: "•"; background: none; width: auto; height: auto; top: 0; color: var(--texto); }
   body.ats .subtit.sep { border: 0; padding-top: 0; margin-top: 6px; }
   body.ats .idioma { display: none; }
@@ -447,6 +454,19 @@
       </div>`).join("");
 
     const lista = (g, xs, extra = "") => `<ul class="lista"${extra}>${xs.map((x, j) => `<li ${arr(g, j)}>${ed(`${g}.${j}`, x)}</li>`).join("")}</ul>`;
+    // Cursos y acreditaciones con el mismo aspecto que Formación:
+    // "Nombre — Centro · 6 h (2022)" → nombre arriba; centro a la izquierda y año a la derecha debajo.
+    // "Carnet de conducir B (en curso)" → todo en una línea, lo de los paréntesis a la derecha.
+    // Cada parte se edita en el CV (data-parte) y se vuelve a juntar en el texto (ver juntarPartes)
+    const parte = (p, n, v, cls = "") => `<span class="${cls}" data-p="${p}" data-parte="${n}">${esc(v)}</span>`;
+    const listaForm = (g, xs) => `<ul class="lista lista-form">${xs.map((x, j) => {
+      const m = String(x).match(/^(.*?)\s*\(([^()]*)\)\s*$/);
+      const [t, ...resto] = (m ? m[1] : String(x)).replace(/\s*·\s*$/, "").split(/\s+[-—–]\s+/);
+      const sub = resto.join(" — "), der = m ? m[2] : "", p = `${g}.${j}`;
+      return sub
+        ? `<li ${arr(g, j)}>${parte(p, "t", t, "lf-t")}<span class="form-sub">${parte(p, "sub", sub)}${parte(p, "der", der, "form-fecha")}</span></li>`
+        : `<li ${arr(g, j)} class="lf-fila">${parte(p, "t", t)}${der || editando ? parte(p, "der", der, "form-fecha") : ""}</li>`;
+    }).join("")}</ul>`;
     // Espacio por sección: "arriba" (px extra encima) e "interno" (multiplica el espacio entre sus elementos)
     const sec = (id, html, cls = "") => {
       const ps = (est.secciones || {})[id] || {};
@@ -491,9 +511,9 @@
           <h2>Formación</h2>
           ${formacion}
           <div class="subtit" style="margin-top:8px">${ed("cursosTitulo", cv.cursosTitulo || "Cursos complementarios")}</div>
-          ${lista("cursos", cv.cursos)}
+          ${listaForm("cursos", cv.cursos)}
           ${cv.otros?.length ? `<div class="subtit" style="margin-top:8px">${ed("otrosTitulo", cv.otrosTitulo || "Carnets y acreditaciones")}</div>
-          ${lista("otros", cv.otros)}` : ""}`),
+          ${listaForm("otros", cv.otros)}` : ""}`),
       idiomas: () => sec("idiomas", `
           <h2>Idiomas</h2>
           ${idiomas}
@@ -598,6 +618,11 @@
       lineaA4.classList.toggle("alerta", columnas.length > 0);
       parentMsg({ tipo: "altura", h: document.documentElement.scrollHeight, desborda: columnas.length > 0, columnas, lineaY: limite + scrollY, id: window._idMedida });
     });
+    // Curso o acreditación editado por partes → "Nombre — Centro (año)"
+    const juntarPartes = li => {
+      const v = n => (li.querySelector(`[data-parte="${n}"]`)?.textContent || "").trim();
+      return v("t") + (v("sub") ? " — " + v("sub") : "") + (v("der") ? ` (${v("der")})` : "");
+    };
     const activar = () => {
       document.querySelectorAll("[data-p]").forEach(el => el.contentEditable = "plaintext-only");
       document.querySelectorAll("section[data-drag]").forEach(sec => sec.insertAdjacentHTML("afterbegin", '<div class="asa-esp" title="Arrastra arriba/abajo para cambiar el espacio encima de esta sección">↕</div>'));
@@ -617,7 +642,7 @@
     });
     document.addEventListener("input", e => {
       const el = e.target.closest("[data-p]");
-      if (el) { parentMsg({ tipo: "editar", p: el.dataset.p, valor: el.textContent }); informar(); }
+      if (el) { parentMsg({ tipo: "editar", p: el.dataset.p, valor: el.dataset.parte ? juntarPartes(el.closest("li")) : el.textContent }); informar(); }
     });
     document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.closest("[data-p]")) { e.preventDefault(); e.target.blur(); } });
     /* ---- Arrastrar y soltar: secciones, experiencias, proyectos, tareas, chips, cursos… ---- */
