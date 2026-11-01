@@ -15,7 +15,15 @@ window.CV = {
     "ubicacion": "Zarautz, Gipuzkoa",
     "linkedin": "linkedin.com/in/josu-manzanas-beldarrain",
     "github": "",
-    "web": "JosuManzanas.com"
+    "web": "JosuManzanas.com",
+    "orden": [
+      "ubicacion",
+      "telefono",
+      "email",
+      "linkedin",
+      "web",
+      "github"
+    ]
   },
   "experiencia": [
     {
@@ -60,13 +68,7 @@ window.CV = {
       "fecha": "ene. 2026 – Actualidad",
       "color": "oro",
       "descripcion": "Diseño y desarrollo de una herramienta en Python para optimizar el seguimiento de la producción, automatizar la verificación de pruebas electrónicas y mejorar la trazabilidad de los resultados.",
-      "etiquetas": [
-        "Python",
-        "SQLite",
-        "UI/UX",
-        "Trazabilidad",
-        "Automatización"
-      ],
+      "etiquetas": [],
       "enlace": ""
     },
     {
@@ -74,14 +76,7 @@ window.CV = {
       "fecha": "jul. 2026 – ago. 2026",
       "color": "coral",
       "descripcion": "Diseño y desarrollo de un sitio web para informar y facilitar la solicitud de servicios de taxi.",
-      "etiquetas": [
-        "HTML",
-        "CSS",
-        "JavaScript",
-        "SEO",
-        "Responsive",
-        "Accesibilidad"
-      ],
+      "etiquetas": [],
       "enlace": "https://TaxiGipuzkoa.es"
     }
   ],
@@ -89,31 +84,35 @@ window.CV = {
     "titulo": "Conocimiento",
     "texto": "",
     "items": [
-      "GIMP",
-      "Inkscape",
-      "Blender",
-      "Kdenlive",
-      "OBS Studio",
-      "Audacity",
-      "Photoshop",
-      "After Effects",
-      "Illustrator",
-      "DaVinci Resolve",
-      "Affinity",
-      "Canva",
       "Windows",
-      "Microsoft 365 Copilot",
       "GNU/Linux",
-      "Python",
-      "Bash"
+      "Microsoft 365 Copilot",
+      "Photoshop",
+      "Illustrator",
+      "After Effects",
+      "Premiere Pro",
+      "Blender",
+      "Audacity",
+      "OBS Studio",
+      "Canva"
     ],
-    "itemsTitulo": "Programas",
+    "itemsTitulo": "Sistemas y software",
     "grupos": [
+      {
+        "titulo": "Programación",
+        "items": [
+          "Python",
+          "Bash",
+          "SQLite",
+          "HTML",
+          "CSS",
+          "JavaScript"
+        ]
+      },
       {
         "titulo": "IA",
         "items": [
           "ChatGPT",
-          "Codex",
           "Claude",
           "OpenClaw",
           "ComfyUI"
@@ -125,21 +124,20 @@ window.CV = {
     "tecnicas": [
       "Reparación electrónica",
       "Diagnóstico de averías",
-      "Puesta en marcha de probadores",
       "Soldadura SMD/PTH/THT",
       "Lectura de esquemas",
       "Pruebas funcionales",
       "Automatización de procesos",
+      "Puesta en marcha de probadores",
       "Control de calidad",
-      "Soporte IT",
-      "HTML/CSS/JavaScript"
+      "Soporte IT"
     ],
     "ia": [],
     "nociones": "",
     "transversales": [
-      "Resolución de problemas",
       "Mejora continua",
       "Trabajo en equipo",
+      "Resolución de problemas",
       "Autoaprendizaje"
     ]
   },
@@ -150,14 +148,11 @@ window.CV = {
       "fechas": "2004 – 2016"
     }
   ],
-  "cursosTitulo": "Cursos",
   "cursos": [
-    "Soldadura manual: conceptos fundamentales — Nufesa Electronics · 6 h (2022)",
-    "Actividades auxiliares de almacén — Gureak · 170 h (2021)",
-    "Animación 3D y realidad virtual 360 — CENTA · 156 h (2019)",
-    "Desarrollo de aplicaciones web — INKOR · 150 h (2019)",
-    "Creación y animación de personajes 3D — CENTA · 150 h (2017)",
-    "Linux (Ubuntu) y ofimática — Casa de Cultura de Orio · 356 h (2014)"
+    "Soldadura manual: conceptos fundamentales - Nufesa Electronics · (2022)",
+    "Actividades auxiliares de almacén - Gureak · (2021)",
+    "Creación y animación 3D - CENTA · (2019)",
+    "Desarrollo de aplicaciones web - INKOR · (2019)"
   ],
   "idiomas": [
     {
@@ -174,10 +169,10 @@ window.CV = {
   "otrosTitulo": "Acreditaciones",
   "otros": [
     "Acreditación de carretillero",
-    "Carnet de conducir B (en proceso)"
+    "Carnet de conducir B (cursando)"
   ],
   "estilo": {
-    "k": 0.975,
+    "k": 0.96,
     "tituloColor": "coral",
     "lineaSecciones": "alterna",
     "lineaTiempo": "color",
@@ -190,17 +185,21 @@ window.CV = {
       },
       "idiomas": {
         "colorTitulo": "coral",
-        "color": "azul"
+        "color": "azul",
+        "arriba": 6
       }
     },
     "qf": 15,
     "mt": 8,
-    "mb": 8
+    "mb": 8,
+    "lateral": "izquierda",
+    "lh": 1.39
   },
   "qr": {
     "mostrar": true,
     "tipo": "vcard",
     "url": "",
     "posicion": "final"
-  }
+  },
+  "cursosTitulo": "Cursos"
 };

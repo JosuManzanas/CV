@@ -323,6 +323,7 @@
     gear:  '<path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 0 0-1.7-1L15 3h-4l-.4 2.9a7.6 7.6 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1L11 21h4l.4-2.9c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7"/>',
     team:  '<path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6M9 13c-3.3 0-7 1.6-7 4v3h14v-3c0-2.4-3.7-4-7-4m7 0c-.4 0-.8 0-1.2.1 1.3.9 2.2 2.2 2.2 3.9v3h5v-3c0-2.2-3.4-4-6-4"/>',
     app:   '<path d="M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3v2H7v-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m1 2v9h16V6z"/>',
+    code:  '<path d="M8.7 16.6 4.1 12l4.6-4.6L7.3 6l-6 6 6 6zm6.6 0 4.6-4.6-4.6-4.6L16.7 6l6 6-6 6zM13.4 4l1.9.6-4.7 15.4-1.9-.6z"/>',
     cap:   '<path d="M12 3 1 9l11 6 9-4.9V17h2V9zM5 13.2v4L12 21l7-3.8v-4L12 17z"/>',
     ia:    '<path d="M10 2.5l1.6 4.4L16 8.5l-4.4 1.6L10 14.5l-1.6-4.4L4 8.5l4.4-1.6zM18 12l.9 2.4 2.4.9-2.4.9L18 18.6l-.9-2.4-2.4-.9 2.4-.9zM6.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
     chat:  '<path d="M12 3C6.5 3 2 6.9 2 11.6c0 2.4 1.2 4.6 3.1 6.1L4 21l4-1.9c1.2.4 2.6.6 4 .6 5.5 0 10-3.9 10-8.6S17.5 3 12 3m0 15.2c-1.3 0-2.5-.2-3.6-.6l-.6-.2-1.7.8.5-1.5-.6-.5C4.4 15 3.6 13.4 3.6 11.6 3.6 7.8 7.4 4.7 12 4.7s8.4 3.1 8.4 6.9-3.8 6.6-8.4 6.6"/>'
@@ -460,7 +461,7 @@
     const tonos = ["azul", "coral", "oro"];
     const filasCrea = gruposCrea.filter((g, n) => n === 0 ? g.items.length || cr.itemsTitulo : g.items.length || editando);
     // Cada grupo con el mismo aspecto que los de Competencias: icono + nombre y sus etiquetas debajo
-    const icoCrea = t => /\b(ia|ai)\b|intelig|agente/i.test(t) ? "ia" : "app";
+    const icoCrea = t => /\b(ia|ai)\b|intelig|agente/i.test(t) ? "ia" : /program|c[oó]digo|code|desarrollo/i.test(t) ? "code" : "app";
     const tablaCrea = filasCrea.length > 1 || cr.itemsTitulo
       ? filasCrea.map((g, n) => `<div class="grupo-con">
           <div class="subtit${n ? " sep" : ""}">${ico(icoCrea(g.titulo), tonos[n % 3] === "oro" ? "" : tonos[n % 3])}${ed(g.pt, g.titulo)}</div>${chips(g.items, tonos[n % 3], g.p)}</div>`).join("")
