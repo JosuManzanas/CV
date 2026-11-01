@@ -144,7 +144,7 @@ window.CV = {
   "formacion": [
     {
       "titulo": "IPI Zaragueta Herri Eskola",
-      "centro": "Educación Primaria y ESO",
+      "centro": "Primaria y ESO",
       "fechas": "2004 – 2016"
     }
   ],
