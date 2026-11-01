@@ -121,9 +121,10 @@
   .subtit.sep { border-top: 1px solid var(--linea); padding-top: 8px; margin-top: 8px; }
   .nota { font-size: calc(8pt * var(--k)); color: var(--suave); margin-top: 5px; line-height: 1.35; }
   .form { display: flex; gap: 9px; margin-bottom: 6px; }
-  .form strong { display: block; font-size: calc(9.4pt * var(--k)); color: var(--azul); line-height: 1.3; }
+  .form strong { display: block; font-size: calc(9.2pt * var(--k)); font-weight: 600; color: var(--azul); line-height: 1.3; }
   .form > div { flex: 1; min-width: 0; }
-  .form div > span { font-size: calc(8.5pt * var(--k)); color: var(--suave); }
+  /* Texto secundario de la columna lateral (centros, fechas, nivel…): un único tamaño y color */
+  .form div > span, .lista-form .form-sub, .lf-fila .form-fecha, .idioma-cab > span { font-size: calc(7.9pt * var(--k)); color: var(--suave); }
   /* Debajo del centro: estudios a la izquierda y fechas a la derecha (como en Experiencia); las fechas no se parten */
   .form-sub { display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 8px; }
   .form-fecha { white-space: nowrap; margin-left: auto; }
@@ -131,9 +132,8 @@
   .lista li { position: relative; padding-left: 11px; font-size: calc(8pt * var(--k)); margin-bottom: 2px; line-height: 1.32; }
   .lista li::before { content: ""; position: absolute; left: 1px; top: .5em; width: 5px; height: 5px; border-radius: 50%; background: var(--oro); }
   .idioma { margin-bottom: calc(6px * var(--ei)); }
-  .idioma-cab { display: flex; justify-content: space-between; font-size: calc(9.2pt * var(--k)); }
+  .idioma-cab { display: flex; justify-content: space-between; align-items: baseline; font-size: calc(9.2pt * var(--k)); }
   .idioma-cab strong { font-weight: 600; color: var(--azul); }
-  .idioma-cab > span { color: var(--suave); font-size: calc(8.6pt * var(--k)); }
   .barra-nivel { height: 5px; background: var(--chip); border-radius: 3px; margin-top: 4px; overflow: hidden; }
   .barra-nivel i { display: block; height: 100%; background: var(--azul); border-radius: 3px; }
   /* columna derecha algo más compacta para que todo quepa en un A4 */
@@ -145,9 +145,7 @@
   .lateral .lista li { margin-bottom: calc(1px * var(--ei)); }
   .lista-form li { margin-bottom: calc(4px * var(--ei)) !important; }
   .lista-form .lf-t { display: block; color: var(--texto); font-weight: 500; }
-  .lista-form .form-sub { font-size: calc(7.8pt * var(--k)); color: var(--suave); }
   .lf-fila { display: flex; justify-content: space-between; column-gap: 8px; }
-  .lf-fila .form-fecha { font-size: calc(7.8pt * var(--k)); color: var(--suave); }
   body.editando .lista-form [data-parte]:empty::before { content: "…"; color: var(--suave); }
   .lateral .form { margin-bottom: calc(4px * var(--ei)); }
   .contacto li { margin-bottom: calc(4px * var(--ei)); }
@@ -336,6 +334,8 @@
     team:  '<path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6M9 13c-3.3 0-7 1.6-7 4v3h14v-3c0-2.4-3.7-4-7-4m7 0c-.4 0-.8 0-1.2.1 1.3.9 2.2 2.2 2.2 3.9v3h5v-3c0-2.2-3.4-4-6-4"/>',
     app:   '<path d="M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3v2H7v-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1m1 2v9h16V6z"/>',
     code:  '<path d="M8.7 16.6 4.1 12l4.6-4.6L7.3 6l-6 6 6 6zm6.6 0 4.6-4.6-4.6-4.6L16.7 6l6 6-6 6zM13.4 4l1.9.6-4.7 15.4-1.9-.6z"/>',
+    libro: '<path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m0 2v16h12V4h-2v7l-2.5-1.5L11 11V4z"/>',
+    medalla: '<path d="M12 8a6 6 0 1 1 0 12 6 6 0 0 1 0-12m0 2.5-1.2 2.4-2.6.4 1.9 1.8-.5 2.6 2.4-1.2 2.4 1.2-.5-2.6 1.9-1.8-2.6-.4zM7 2h10l-2.6 5.2A8 8 0 0 0 12 7a8 8 0 0 0-2.4.2z"/>',
     cap:   '<path d="M12 3 1 9l11 6 9-4.9V17h2V9zM5 13.2v4L12 21l7-3.8v-4L12 17z"/>',
     ia:    '<path d="M10 2.5l1.6 4.4L16 8.5l-4.4 1.6L10 14.5l-1.6-4.4L4 8.5l4.4-1.6zM18 12l.9 2.4 2.4.9-2.4.9L18 18.6l-.9-2.4-2.4-.9 2.4-.9zM6.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
     chat:  '<path d="M12 3C6.5 3 2 6.9 2 11.6c0 2.4 1.2 4.6 3.1 6.1L4 21l4-1.9c1.2.4 2.6.6 4 .6 5.5 0 10-3.9 10-8.6S17.5 3 12 3m0 15.2c-1.3 0-2.5-.2-3.6-.6l-.6-.2-1.7.8.5-1.5-.6-.5C4.4 15 3.6 13.4 3.6 11.6 3.6 7.8 7.4 4.7 12 4.7s8.4 3.1 8.4 6.9-3.8 6.6-8.4 6.6"/>'
@@ -510,9 +510,9 @@
       formacion: () => sec("formacion", `
           <h2>Formación</h2>
           ${formacion}
-          <div class="subtit" style="margin-top:8px">${ed("cursosTitulo", cv.cursosTitulo || "Cursos complementarios")}</div>
+          <div class="subtit sep">${ico("libro", "azul")}${ed("cursosTitulo", cv.cursosTitulo || "Cursos complementarios")}</div>
           ${listaForm("cursos", cv.cursos)}
-          ${cv.otros?.length ? `<div class="subtit" style="margin-top:8px">${ed("otrosTitulo", cv.otrosTitulo || "Carnets y acreditaciones")}</div>
+          ${cv.otros?.length ? `<div class="subtit sep">${ico("medalla", "coral")}${ed("otrosTitulo", cv.otrosTitulo || "Carnets y acreditaciones")}</div>
           ${listaForm("otros", cv.otros)}` : ""}`),
       idiomas: () => sec("idiomas", `
           <h2>Idiomas</h2>

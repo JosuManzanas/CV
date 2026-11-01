@@ -27,7 +27,7 @@ window.CV = {
   },
   "experiencia": [
     {
-      "puesto": "Técnico de Reparaciones",
+      "puesto": "Técnico de reparaciones",
       "empresa": "KL KateaLegaia",
       "lugar": "Zarautz, Gipuzkoa",
       "fechas": "ene. 2024 – Actualidad",
