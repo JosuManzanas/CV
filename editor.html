@@ -197,7 +197,7 @@
   <button id="ats" title="Ver cómo queda la versión de una columna para filtros ATS"><span class="txt">Versión </span>ATS</button>
   <button id="nuevo" class="solo-publico" title="Empezar otro CV: en blanco, desde un ejemplo o desde un archivo" aria-label="Nuevo o ejemplos">+<span class="txt"> Nuevo / Ejemplos</span></button>
   <button id="abrir" title="Abrir un archivo de datos guardado antes" aria-label="Abrir">📂<span class="txt"> Abrir…</span></button>
-  <button id="guardar" title="Descargar tus datos para seguir editando otro día (Ctrl+S)" aria-label="Guardar">💾<span class="txt"><span class="solo-propio"> Guardar</span><span class="solo-publico"> Guardar mis datos</span></span></button>
+  <button id="guardar" title="Guarda en el archivo que abriste con 📂 Abrir… (o descarga una copia) para seguir otro día (Ctrl+S)" aria-label="Guardar">💾<span class="txt"><span class="solo-propio"> Guardar</span><span class="solo-publico"> Guardar mis datos</span></span></button>
   <button id="pdf" class="guardar">⬇<span class="txt"> Descargar</span> PDF</button>
   <button id="publicar" class="publicar solo-propio" title="Publicar los cambios en tu web (GitHub Pages)" aria-label="Publicar">☁️<span class="txt"> Publicar</span></button>
   <button id="ajustes-gh" class="solo-propio" title="Configurar la conexión con GitHub">⚙︎</button>
@@ -648,6 +648,15 @@ const bloqueado = () => document.body.classList.contains("bloqueado");
 async function guardar() {
   if (bloqueado()) return;
   clearTimeout(tGuardarHist); apuntarHistoria();
+  // Archivo abierto con 📂 Abrir… (Chrome/Edge): se guarda en ese mismo archivo, en su formato (.js = datos.js)
+  if (handle) {
+    try {
+      const w = await handle.createWritable();
+      await w.write(/\.js$/i.test(handle.name) ? serializar() : JSON.stringify(cv, null, 2)); await w.close();
+      if (PUBLICO) { sucio = false; toast("✅ Guardado en " + handle.name, 4000); } else hecho("✅ Guardado en " + handle.name);
+      return;
+    } catch (err) { if (err.name === "AbortError") return; handle = null; toast("No se pudo escribir en el archivo: se descarga una copia", 4000); }
+  }
   if (PUBLICO) {
     const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([JSON.stringify(cv, null, 2)], { type: "application/json" })), download: nombreArchivo(" (datos).json") });
     a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
@@ -784,13 +793,25 @@ async function entrarPropio() {
   }
 }
 
-$("#abrir").onclick = () => $("#fichero").click();
-$("#fichero").onchange = async e => {
-  const f = e.target.files[0]; if (!f) return;
+// Abrir: en Chrome/Edge se recuerda el archivo abierto y «Guardar» escribe en ese mismo archivo (.json o datos.js);
+// en otros navegadores se lee con el selector clásico y «Guardar» descarga una copia
+async function cargarArchivo(f, h = null) {
   try {
     const datos = leerDatosJS(await f.text());   // se lee como datos, nunca se ejecuta
-    cv = datos; handle = null; cerrarBienvenida(); cambio({ refrescarPanel: true }); toast("Cargado " + f.name);
+    cv = datos; handle = h; cerrarBienvenida(); cambio({ refrescarPanel: true }); sucio = false;
+    toast(h ? `Abierto ${f.name} · 💾 Guardar escribirá en este mismo archivo` : "Cargado " + f.name, h ? 5000 : 2500);
   } catch (err) { toast("Ese archivo no es un CV guardado con este editor"); }
+}
+$("#abrir").onclick = async () => {
+  if (!window.showOpenFilePicker) return $("#fichero").click();
+  try {
+    const [h] = await showOpenFilePicker({ types: [{ description: "Datos del CV", accept: { "application/json": [".json"], "text/javascript": [".js"] } }] });
+    await cargarArchivo(await h.getFile(), h);
+  } catch (err) { if (err.name !== "AbortError") $("#fichero").click(); }
+};
+$("#fichero").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  await cargarArchivo(f);
   e.target.value = "";
 };
 
@@ -903,7 +924,7 @@ function toast(msg, ms = 2500) { const t = $("#toast"); t.textContent = msg; t.c
 function abrirBienvenida() { const d = $("#bienvenida"); if (!d.open) d.showModal(); }
 function cerrarBienvenida() { const d = $("#bienvenida"); if (d.open) d.close(); }
 function empezar(base) {
-  cv = structuredClone(base); historia = [JSON.stringify(cv)]; pos = 0; botonesHist();
+  cv = structuredClone(base); handle = null; historia = [JSON.stringify(cv)]; pos = 0; botonesHist();
   abiertos.clear(); abiertos.add("sec-cabecera");
   cerrarBienvenida(); cambio({ refrescarPanel: true }); sucio = false;
 }
