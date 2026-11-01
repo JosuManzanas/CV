@@ -19,7 +19,7 @@
 <meta property="og:url" content="https://josumanzanas.github.io/CV/">
 <style>
   /* Tipografía de la marca JM (variable 100–900) */
-  @font-face { font-family: "Adwaita Sans JM"; src: url("fuentes/AdwaitaSans-Regular.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
+  @font-face { font-family: "Adwaita Sans JM"; src: url("fuentes/AdwaitaSans-Regular.woff2") format("woff2"), url("fuentes/AdwaitaSans-Regular.ttf") format("truetype"); font-weight: 100 900; font-display: swap; }
 
   :root {
     --fuente: "Adwaita Sans JM", "Adwaita Sans", Inter, Arial, sans-serif;
@@ -131,6 +131,7 @@
   /* Debajo del centro: estudios a la izquierda y fechas a la derecha (como en Experiencia); las fechas no se parten */
   .form-sub { display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 8px; }
   .form-fecha { white-space: nowrap; margin-left: auto; }
+  .sep-txt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: pre; }
   .lista { list-style: none; }
   .lista li { position: relative; padding-left: 11px; font-size: calc(8pt * var(--k)); margin-bottom: 2px; line-height: 1.32; }
   .lista li::before { content: ""; position: absolute; left: 1px; top: .5em; width: 5px; height: 5px; border-radius: 50%; background: var(--oro); }
@@ -262,8 +263,8 @@
   body.ats .contacto { display: flex; flex-wrap: wrap; gap: 4px 16px; }
   body.ats .contacto li { margin: 0; }
   body.ats .form { display: block; }
-  body.ats .form-sub, body.ats .lf-fila { display: block; } body.ats :is(.form-sub, .lf-fila) > span + .form-fecha:not(:empty)::before { content: " · "; }
-  body.ats .lista-form .lf-t { display: inline; font-weight: 400; } body.ats .lista-form .lf-t + .form-sub { display: inline; } body.ats .lista-form .lf-t + .form-sub::before { content: " — "; }
+  body.ats .form-sub, body.ats .lf-fila { display: block; } body.ats .sep-txt { position: static; width: auto; height: auto; clip-path: none; }
+  body.ats .lista-form .lf-t { display: inline; font-weight: 400; } body.ats .lista-form .form-sub { display: inline; }
   body.ats .lista li::before { content: "•"; background: none; width: auto; height: auto; top: 0; color: var(--texto); }
   body.ats .subtit.sep { border: 0; padding-top: 0; margin-top: 6px; }
   body.ats .idioma { display: none; }
@@ -331,7 +332,8 @@
 
 <noscript><p style="text-align:center;padding:20px">Activa JavaScript para ver el currículum.</p></noscript>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<!-- qrcode-generator 1.4.4 (MIT), copia local: esta página se carga dentro del editor, donde puede estar el token de GitHub -->
+<script src="qrcode.min.js"></script>
 <script src="datos.js"></script>
 <script>
   /* ---- Iconos SVG ---- */
@@ -352,6 +354,8 @@
     ia:    '<path d="M10 2.5l1.6 4.4L16 8.5l-4.4 1.6L10 14.5l-1.6-4.4L4 8.5l4.4-1.6zM18 12l.9 2.4 2.4.9-2.4.9L18 18.6l-.9-2.4-2.4-.9 2.4-.9zM6.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
     chat:  '<path d="M12 3C6.5 3 2 6.9 2 11.6c0 2.4 1.2 4.6 3.1 6.1L4 21l4-1.9c1.2.4 2.6.6 4 .6 5.5 0 10-3.9 10-8.6S17.5 3 12 3m0 15.2c-1.3 0-2.5-.2-3.6-.6l-.6-.2-1.7.8.5-1.5-.6-.5C4.4 15 3.6 13.4 3.6 11.6 3.6 7.8 7.4 4.7 12 4.7s8.4 3.1 8.4 6.9-3.8 6.6-8.4 6.6"/>'
   };
+  // Separador de texto oculto a la vista: así al copiar el texto o leerlo un filtro ATS no sale "Primaria y ESO2004 – 2016"
+  const sep = t => `<span class="sep-txt">${t}</span>`, SEP = sep(" · ");
   const ico = (n, cls = "") => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${I[n]}</svg>`;
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   // En el editor, el «+» para añadir va pegado a la derecha de la última etiqueta (o donde iría la primera si no hay)
@@ -360,7 +364,7 @@
     return `<ul class="chips ${cls}">${arr.map((t, i) => `<li${p ? ` data-drag data-grupo="${p}" data-i="${i}"` : ""}>${p ? ed(`${p}.${i}`, t) +
       `<button class="chip-x" data-borrar="${p}.${i}" title="Quitar">×</button>` + (i === arr.length - 1 ? mas("span") : "") : esc(t)}</li>`).join("")}${
       p && !arr.length ? mas("li") : ""}</ul>
-                                    <p class="solo-ats">${arr.map(esc).join(", ")}.</p>`;
+                                    ${arr.length ? `<p class="solo-ats">${arr.map(esc).join(", ")}.</p>` : ""}`;
   };
   // Solo enlaces http(s): cualquier otra cosa (javascript:, data:…) se trata como texto de una web
   const url = s => (/^https?:\/\//i.test(s) ? s : "https://" + String(s).replace(/^[a-z][a-z0-9+.-]*:\/*/i, ""));
@@ -464,7 +468,7 @@
 
     const k = cv.competencias;
     const formacion = cv.formacion.map((f, n) => `
-      <div class="form" ${arr("formacion", n)}>${ico("cap", "azul")}<div><strong>${ed(`formacion.${n}.titulo`, f.titulo)}</strong><span class="form-sub">${f.centro ? `<span>${esc(f.centro)}</span>` : ""}${f.fechas ? `<span class="form-fecha">${esc(f.fechas)}</span>` : ""}</span></div></div>`).join("");
+      <div class="form" ${arr("formacion", n)}>${ico("cap", "azul")}<div><strong>${ed(`formacion.${n}.titulo`, f.titulo)}</strong><span class="form-sub">${f.centro ? `<span>${esc(f.centro)}</span>` : ""}${f.centro && f.fechas ? SEP : ""}${f.fechas ? `<span class="form-fecha">${esc(f.fechas)}</span>` : ""}</span></div></div>`).join("");
 
     const idiomas = cv.idiomas.map((i, n) => `
       <div class="idioma" ${arr("idiomas", n)}>
@@ -483,8 +487,8 @@
       const [t, ...resto] = (m ? m[1] : String(x)).replace(/\s*·\s*$/, "").split(/\s+[-—–]\s+/);
       const sub = resto.join(" — "), der = m ? m[2] : "", p = `${g}.${j}`;
       return sub
-        ? `<li ${arr(g, j)}>${parte(p, "t", t, "lf-t")}<span class="form-sub">${parte(p, "sub", sub)}${parte(p, "der", der, "form-fecha")}</span></li>`
-        : `<li ${arr(g, j)} class="lf-fila">${parte(p, "t", t)}${der || editando ? parte(p, "der", der, "form-fecha") : ""}</li>`;
+        ? `<li ${arr(g, j)}>${parte(p, "t", t, "lf-t")}${sep(" — ")}<span class="form-sub">${parte(p, "sub", sub)}${der ? SEP : ""}${parte(p, "der", der, "form-fecha")}</span></li>`
+        : `<li ${arr(g, j)} class="lf-fila">${parte(p, "t", t)}${der ? SEP : ""}${der || editando ? parte(p, "der", der, "form-fecha") : ""}</li>`;
     }).join("")}</ul>`;
     // Espacio por sección: "arriba" (px extra encima) e "interno" (multiplica el espacio entre sus elementos)
     const sec = (id, html, cls = "") => {

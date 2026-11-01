@@ -23,7 +23,7 @@
   if (window.top !== window.self) { document.documentElement.classList.add("enmarcado"); try { window.top.location = window.self.location.href; } catch (e) {} }
 </script>
 <style>
-  @font-face { font-family: "Adwaita Sans JM"; src: url("fuentes/AdwaitaSans-Regular.ttf") format("truetype"); font-weight: 100 900; }
+  @font-face { font-family: "Adwaita Sans JM"; src: url("fuentes/AdwaitaSans-Regular.woff2") format("woff2"), url("fuentes/AdwaitaSans-Regular.ttf") format("truetype"); font-weight: 100 900; }
   :root {
     --indigo: #202080; --coral: #FF4064; --oro: #D3BC5F; --papel: #FAF8F4;
     --texto: #23233a; --suave: #6a6a88; --linea: #e2e0ea; --panel: #ffffff; --fondo: #ebe8e0;
@@ -273,7 +273,9 @@
 /* ======================= Modo ======================= */
 // Modo propio (el CV de Josu, con ☁️ Publicar): editor.html?yo, o si este navegador ya tiene la conexión con GitHub.
 // Modo público (por defecto): cualquiera crea SU propio CV, que se guarda solo en su navegador.
-const PROPIO = new URLSearchParams(location.search).has("yo") || (() => { try { return !!JSON.parse(localStorage.getItem("cv-jm-github") || "{}").repo; } catch (e) { return false; } })();
+// (?publico fuerza el modo público aunque este navegador recuerde la conexión: es a donde lleva «Cancelar» al pedir el token)
+const PROPIO = new URLSearchParams(location.search).has("yo") || (!new URLSearchParams(location.search).has("publico") &&
+  (() => { try { return !!JSON.parse(localStorage.getItem("cv-jm-github") || "{}").repo; } catch (e) { return false; } })());
 const PUBLICO = !PROPIO;
 document.body.classList.toggle("publico", PUBLICO);
 if (PROPIO) document.title = "Editor de CV · JM";
@@ -738,7 +740,7 @@ function configurarGH(accion = "ajustes") {
   $("#gh-token").value = c.token; $("#gh-recordar").checked = c.recordar;
   d.returnValue = ""; d.showModal();
   d.onclose = () => {
-    if (d.returnValue !== "ok") { if (accion === "entrar") location.href = "editor.html"; return; }
+    if (d.returnValue !== "ok") { if (accion === "entrar") location.href = "editor.html?publico"; return; }
     escribirGH({ repo: limpiarRepo($("#gh-repo").value), rama: $("#gh-rama").value.trim() || "main", ruta: $("#gh-ruta").value.trim() || "datos.js",
       token: $("#gh-token").value.trim(), recordar: $("#gh-recordar").checked });
     if (accion === "entrar") entrarPropio(); else if (accion === "publicar") publicar(); else toast("Conexión con GitHub guardada");
