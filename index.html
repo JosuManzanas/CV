@@ -89,8 +89,10 @@
   .item.oro { --c: var(--oro); } .item.coral { --c: var(--coral); } .item.azul { --c: var(--azul); }
   .item-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
   .item h3 { font-size: calc(10.4pt * var(--k)); font-weight: 600; color: var(--azul); }
-  .fecha { font-size: calc(8.6pt * var(--k)); color: var(--suave); white-space: nowrap; }
-  .empresa { color: var(--suave); font-size: calc(9.6pt * var(--k)); margin-top: 1px; }
+  /* Texto secundario de la columna principal (fechas, empresa · lugar): un único tamaño y color */
+  .fecha, .empresa { font-size: calc(8.8pt * var(--k)); color: var(--suave); }
+  .fecha { white-space: nowrap; }
+  .empresa { margin-top: 1px; }
   .item ul { list-style: none; margin-top: 5px; }
   .item li { position: relative; padding-left: 13px; margin-top: 2px; }
   .item li::before { content: ""; position: absolute; left: 1px; top: .58em; width: 5px; height: 5px; border-radius: 50%; background: var(--c); }
