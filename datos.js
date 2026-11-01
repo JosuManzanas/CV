@@ -150,6 +150,7 @@ window.CV = {
       "fechas": "2004 – 2016"
     }
   ],
+  "cursosTitulo": "Cursos",
   "cursos": [
     "Soldadura manual: conceptos fundamentales — Nufesa Electronics · 6 h (2022)",
     "Actividades auxiliares de almacén — Gureak · 170 h (2021)",

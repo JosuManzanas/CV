@@ -484,7 +484,7 @@
       formacion: () => sec("formacion", `
           <h2>Formación</h2>
           ${formacion}
-          <div class="subtit" style="margin-top:8px">Cursos complementarios</div>
+          <div class="subtit" style="margin-top:8px">${ed("cursosTitulo", cv.cursosTitulo || "Cursos complementarios")}</div>
           ${lista("cursos", cv.cursos)}
           ${cv.otros?.length ? `<div class="subtit" style="margin-top:8px">${ed("otrosTitulo", cv.otrosTitulo || "Carnets y acreditaciones")}</div>
           ${lista("otros", cv.otros)}` : ""}`),
