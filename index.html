@@ -75,8 +75,8 @@
 
   /* títulos de sección */
   h2 { display: flex; align-items: center; gap: 10px; font: 700 calc(10.5pt * var(--k)) var(--fuente); letter-spacing: .22em; color: var(--titulo, var(--azul)); text-transform: uppercase; margin: 15px 0 8px; }
-  h2::after { content: ""; flex: 1; height: 1.2px; background: var(--acento, var(--azul)); opacity: .8; }
-  section[style*="--acento"] > h2::after { height: 1.6px; opacity: 1; }
+  /* Línea de los títulos: igual en todas las secciones (grosor y estilo en editor.html → Diseño de página; solo cambia el color) */
+  h2::after { content: ""; flex: 1; height: 0; border-top: var(--lg, 1.4px) var(--lt, solid) var(--acento, var(--azul)); }
 
   /* línea de tiempo */
   .linea-tiempo { position: relative; }
@@ -387,6 +387,9 @@
     const est = cv.estilo || {};
     Object.entries(ESTILO).forEach(([k, d]) => raiz.setProperty("--" + k, (est[k] ?? d) + (EN_MM.includes(k) ? "mm" : "")));
     raiz.setProperty("--k0", est.k ?? 1);   // tamaño base para el modo web
+    // Línea de los títulos de sección: grosor (px) y estilo, iguales para todas
+    raiz.setProperty("--lg", Math.max(0.5, Math.min(4, +est.lineaGrosor || 1.4)) + "px");
+    raiz.setProperty("--lt", ["solid", "dashed", "dotted", "none"].includes(est.lineaTipo) ? est.lineaTipo : "solid");
 
     const arr = (g, i) => `data-drag data-grupo="${g}" data-i="${i}"`;
     const arrC = k => `data-drag data-grupo="contacto" data-k="${k}"`;

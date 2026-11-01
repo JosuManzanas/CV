@@ -470,6 +470,7 @@ function formato(v, f) {
   if (f === "mm") return v + " mm";
   if (f === "px") return (v > 0 ? "+" : "") + v + " px";
   if (f === "lh") return v.toFixed(2);
+  if (f === "grosor") return v.toFixed(1) + " px";
   return v + "%";
 }
 
@@ -539,6 +540,8 @@ function construirPanel() {
        <div class="subt">Líneas</div>
        ${campo("estilo.lineaTiempo", "Línea de tiempo (Experiencia, Proyectos)", "opciones", [[["oro", "Dorada"], ["color", "Color de cada punto"]], "oro"])}
        ${campo("estilo.lineaSecciones", "Línea de los títulos", "opciones", [[["azul", "Índigo"], ["alterna", "Alterna colores"]], "azul"])}
+       ${campo("estilo.lineaTipo", "Estilo de la línea de los títulos", "opciones", [[["solid", "━ Continua"], ["dashed", "╍ Discontinua"], ["dotted", "┈ Puntos"], ["none", "Sin línea"]], "solid"])}
+       ${campo("estilo.lineaGrosor", "Grosor de la línea de los títulos", "desliz", [0.5, 3, 0.1, 1.4, "grosor"])}
        ${campo("estilo.tituloColor", "Nombre de las secciones", "opciones", [[["", "Índigo"], ["linea", "Igual que su línea"], ["coral", "Coral", COLORES.coral], ["oro", "Dorado", COLORES.oro]], ""])}
        <div class="subt">Márgenes de la hoja</div>
        <div class="fila">${campo("estilo.mt", "Superior", "desliz", [4, 25, 0.5, 12, "mm"])}${campo("estilo.mb", "Inferior", "desliz", [4, 25, 0.5, 10, "mm"])}</div>
