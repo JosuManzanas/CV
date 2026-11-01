@@ -102,6 +102,7 @@
   .rango input { flex: 1; accent-color: var(--indigo); }
   .subt { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--indigo); margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--linea); }
   .subt:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+  .grupo-crea .subt { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--linea); }
   .segm { display: flex; flex-wrap: wrap; gap: 4px; }
   .segm button { border: 1px solid var(--linea); background: #fff; border-radius: 7px; padding: 5px 9px; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-weight: 500; color: var(--texto); }
   .segm button i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -355,6 +356,12 @@ window.addEventListener("message", e => {
     const [x] = lista.splice(m.de, 1); lista.splice(m.a, 0, x);
     return cambio({ refrescarPanel: true });
   }
+  if (m.tipo === "ordenContacto") {
+    const CLAVES = ["email", "telefono", "ubicacion", "linkedin", "github", "web"];
+    if (!Array.isArray(m.orden) || !m.orden.every(k => CLAVES.includes(k))) return;
+    cv.contacto.orden = [...new Set([...m.orden, ...CLAVES])];
+    return cambio({ refrescarPanel: true });
+  }
   if (m.tipo === "espacio") {
     if (!rutaValida(m.id) || !Number.isFinite(m.arriba)) return;
     ((cv.estilo ??= {}).secciones ??= {})[m.id] = { ...(cv.estilo.secciones[m.id] || {}), arriba: m.arriba };
@@ -432,8 +439,8 @@ const ESQUEMAS = {
     campos: [["idioma", "Idioma"], ["nivel", "Nivel"], ["porcentaje", "Barra", "rango"]] }
 };
 
-const SECCIONES_CV = [["contacto", "Contacto"], ["experiencia", "Experiencia"], ["proyectos", "Proyectos"], ["creatividad", PUBLICO ? "Herramientas y extras" : "Diseño y multimedia"],
-  ["competencias", "Competencias"], ["formacion", "Formación"], ["idiomas", "Idiomas"], ["otros", "Carnets y acreditaciones"]];
+const SECCIONES_CV = [["contacto", "Contacto"], ["experiencia", "Experiencia"], ["proyectos", "Proyectos"], ["creatividad", PUBLICO ? "Herramientas y extras" : "Conocimiento"],
+  ["competencias", "Competencias"], ["formacion", "Formación"], ["idiomas", "Idiomas"]];
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 function campo(p, etiqueta, tipo = "texto", ayuda = "") {
@@ -509,15 +516,19 @@ function construirPanel() {
        ${{ final: campo("estilo.qf", "Tamaño del QR", "desliz", [12, 26, 0.5, 15, "mm"]), contacto: campo("estilo.qr", "Tamaño del QR", "desliz", [12, 24, 0.5, 15, "mm"]), cabecera: campo("estilo.qc", "Tamaño del QR", "desliz", [16, 32, 0.5, 24, "mm"]) }[cv.qr?.posicion || "final"]}`),
     seccion("sec-exp", "Experiencia", "#FF4064", lista("experiencia")),
     seccion("sec-proy", "Proyectos", "#D3BC5F", lista("proyectos")),
-    seccion("sec-crea", PUBLICO ? "Herramientas y extras" : "Diseño y multimedia", "#FF4064",
-      `${campo("creatividad.titulo", "Título de la sección")}${campo("creatividad.texto", "Frase (opcional)", "area", "vacío = sin frase")}${campo("creatividad.items", "Herramientas", "lineas", "una por línea · vacío = se oculta la sección")}`),
+    seccion("sec-crea", PUBLICO ? "Herramientas y extras" : "Conocimiento", "#FF4064",
+      `${campo("creatividad.titulo", "Título de la sección")}${campo("creatividad.texto", "Frase (opcional)", "area", "vacío = sin frase")}
+       ${campo("creatividad.itemsTitulo", "Nombre del grupo", "texto", "p. ej. Programas · vacío = una sola lista sin grupos")}${campo("creatividad.items", "Herramientas", "lineas", "una por línea")}
+       ${(Array.isArray(cv.creatividad?.grupos) ? cv.creatividad.grupos : []).map((g, i) => `<div class="grupo-crea">
+         <div class="subt">Grupo ${i + 2}<button type="button" class="mini borrar" title="Quitar este grupo" data-quitar-grupo="${i}">✕</button></div>
+         ${campo(`creatividad.grupos.${i}.titulo`, "Nombre del grupo", "texto", "p. ej. IA")}${campo(`creatividad.grupos.${i}.items`, "Herramientas", "lineas", "una por línea")}</div>`).join("")}
+       <button type="button" class="anadir" data-anadir-grupo>+ Añadir grupo</button>`),
     seccion("sec-comp", "Competencias", "#202080",
-      `${campo("competencias.tecnicas", "Técnicas", "lineas", "una por línea")}${campo("competencias.iaTitulo", "Título del grupo extra", "texto", "p. ej. IA, Software, Idiomas técnicos")}${campo("competencias.ia", "Grupo extra", "lineas", "una por línea · vacío = se oculta")}${campo("competencias.transversales", "Transversales", "lineas", "una por línea")}
+      `${campo("competencias.tecnicas", "Técnicas", "lineas", "una por línea")}${campo("competencias.iaTitulo", "Título del grupo extra", "texto", "p. ej. IA, Software, Idiomas técnicos")}${campo("competencias.ia", "Grupo extra", "lineas", "una por línea · vacío = se oculta")}${campo("competencias.transversales", "Actitudes", "lineas", "una por línea")}
        ${campo("competencias.nociones", "Nota bajo técnicas", "texto", "vacío = se oculta")}`),
-    seccion("sec-form", "Formación y cursos", "#FF4064", lista("formacion") + campo("cursos", "Cursos complementarios", "lineas", "uno por línea")),
+    seccion("sec-form", "Formación y cursos", "#FF4064", lista("formacion") + campo("cursos", "Cursos complementarios", "lineas", "uno por línea") +
+      `${campo("otrosTitulo", "Título de carnets y acreditaciones", "texto", "vacío = «Carnets y acreditaciones»")}${campo("otros", "Carnets, acreditaciones…", "lineas", "uno por línea · vacío = no se muestra")}`),
     seccion("sec-idi", "Idiomas", "#D3BC5F", lista("idiomas")),
-    seccion("sec-otros", "Carnets y acreditaciones", "#202080",
-      `${campo("otrosTitulo", "Título de la sección", "texto", "vacío = «Carnets y acreditaciones»")}${campo("otros", "Carnets, acreditaciones…", "lineas", "uno por línea · vacío = se oculta la sección")}`),
     seccion("sec-dis", "Diseño de página", "#FF4064",
       `<div class="subt">General</div>
        ${campo("estilo.lateral", "Columna lateral (contacto, formación, idiomas…)", "opciones", [[["derecha", "▮▯ A la derecha"], ["izquierda", "▯▮ A la izquierda"]], "derecha"])}
@@ -593,6 +604,18 @@ sec.addEventListener("click", e => {
   if (b.id === "resetDis") { const o = cv.estilo?.orden; cv.estilo = o ? { orden: o } : {}; return cambio({ refrescarPanel: true }); }
   if (b.id === "resetOrden") { if (cv.estilo) delete cv.estilo.orden; return cambio({ refrescarPanel: true }); }
   if (b.id === "resetCol") { delete cv.colores; return cambio({ refrescarPanel: true }); }
+  if (b.hasAttribute("data-anadir-grupo")) {
+    const c = (cv.creatividad ??= { items: [] });
+    if (!c.itemsTitulo) c.itemsTitulo = "Programas";   // con dos grupos, el primero también necesita nombre
+    (c.grupos ??= []).push({ titulo: c.grupos.length ? "Grupo" : "IA", items: [] });
+    return cambio({ refrescarPanel: true });
+  }
+  if (b.dataset.quitarGrupo) {
+    e.preventDefault();
+    const g = cv.creatividad?.grupos, i = +b.dataset.quitarGrupo;
+    if (!g?.[i] || !confirm(`¿Quitar el grupo "${g[i].titulo || "sin nombre"}"? (Puedes deshacerlo)`)) return;
+    g.splice(i, 1); return cambio({ refrescarPanel: true });
+  }
   if (b.dataset.anadir) { const k = b.dataset.anadir; (cv[k] ??= []).push(ESQUEMAS[k].nuevo()); abiertos.add(`${k}-${cv[k].length - 1}`); return cambio({ refrescarPanel: true }); }
   if (b.dataset.borrar) {
     e.preventDefault();
@@ -781,11 +804,11 @@ const medir = cand => new Promise(res => {
   medidor.contentWindow.postMessage({ tipo: "cv", cv: structuredClone(cand), id: idMedida }, ORIGEN);
   setTimeout(() => { if (esperaMedida === res) { esperaMedida = null; res(null); } }, 2500);
 });
-const ORDEN_DEF = { principal: ["experiencia", "proyectos", "creatividad"], lateral: ["contacto", "competencias", "formacion", "idiomas", "otros"] };
+const ORDEN_DEF = { principal: ["experiencia", "proyectos", "creatividad"], lateral: ["contacto", "competencias", "formacion", "idiomas"] };
 const NOMBRES = Object.fromEntries(SECCIONES_CV);
 const ordenActual = c => {
   const o = c.estilo?.orden || {};
-  const izq = (o.principal || ORDEN_DEF.principal).slice(), der = (o.lateral || ORDEN_DEF.lateral).filter(id => !izq.includes(id));
+  const izq = (o.principal || ORDEN_DEF.principal).filter(id => NOMBRES[id]), der = (o.lateral || ORDEN_DEF.lateral).filter(id => NOMBRES[id] && !izq.includes(id));
   Object.keys(NOMBRES).forEach(id => { if (!izq.includes(id) && !der.includes(id)) (ORDEN_DEF.principal.includes(id) ? izq : der).push(id); });
   return { principal: izq, lateral: der };
 };
@@ -904,8 +927,9 @@ function revisarBorrador() { try {
 } catch (e) {} }
 construirPanel(); botonesHist(); ajustarZoom();
 // La primera vez se empieza directamente en blanco; los ejemplos están en "+ Nuevo"
-if (PUBLICO && !guardadoPublico) toast("Haz clic en cualquier texto para cambiarlo · ¿Prefieres partir de un ejemplo? Pulsa + Nuevo", 7000);
-else entrarPropio();
+// El token solo se pide en modo propio; en el público, quien vuelve sigue con el CV guardado en su navegador
+if (PROPIO) entrarPropio();
+else if (!guardadoPublico) toast("Haz clic en cualquier texto para cambiarlo · ¿Prefieres partir de un ejemplo? Pulsa + Nuevo", 7000);
 </script>
 </body>
 </html>

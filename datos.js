@@ -86,7 +86,7 @@ window.CV = {
     }
   ],
   "creatividad": {
-    "titulo": "Diseño y multimedia",
+    "titulo": "Conocimiento",
     "texto": "",
     "items": [
       "GIMP",
@@ -95,13 +95,30 @@ window.CV = {
       "Kdenlive",
       "OBS Studio",
       "Audacity",
-      "ComfyUI",
       "Photoshop",
       "After Effects",
       "Illustrator",
       "DaVinci Resolve",
       "Affinity",
-      "Canva"
+      "Canva",
+      "Windows",
+      "Microsoft 365 Copilot",
+      "GNU/Linux",
+      "Python",
+      "Bash"
+    ],
+    "itemsTitulo": "Programas",
+    "grupos": [
+      {
+        "titulo": "IA",
+        "items": [
+          "ChatGPT",
+          "Codex",
+          "Claude",
+          "OpenClaw",
+          "ComfyUI"
+        ]
+      }
     ]
   },
   "competencias": {
@@ -115,20 +132,9 @@ window.CV = {
       "Automatización de procesos",
       "Control de calidad",
       "Soporte IT",
-      "Windows",
-      "Microsoft 365 Copilot",
-      "GNU/Linux",
-      "HTML/CSS/JavaScript",
-      "Python",
-      "Bash"
+      "HTML/CSS/JavaScript"
     ],
-    "ia": [
-      "ChatGPT",
-      "Codex",
-      "Claude",
-      "OpenClaw",
-      "ComfyUI"
-    ],
+    "ia": [],
     "nociones": "",
     "transversales": [
       "Resolución de problemas",
