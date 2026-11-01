@@ -189,14 +189,17 @@
   body.editando .chips li { position: relative; }
   body.editando .chip-x { display: none; position: absolute; top: -6px; right: -6px; width: 15px; height: 15px; border-radius: 50%; border: 0;
     background: var(--coral); color: #fff; font: 700 11px/15px var(--fuente); padding: 0; cursor: pointer; }
-  body.editando .chips li:hover .chip-x { display: block; }
-  /* "+ Añadir" flotante: no ocupa sitio (el CV mide lo mismo que el PDF) y aparece al pasar por encima */
+  body.editando .chips li:hover:not(:has(.chip-mas:hover)) .chip-x { display: block; }   /* sobre el «+» no sale la × de la última */
+  /* «+» flotante para añadir etiquetas: no ocupa sitio (el CV mide lo mismo que el PDF) y aparece al pasar por encima.
+     Va a la derecha de la última etiqueta; al irse el ratón tarda un poco en ocultarse para que dé tiempo a llegar a él */
   body.editando .chips { position: relative; }
   body.editando .chips:not(:has(> li:not(.chip-mas))) { margin-top: 0; }
-  body.editando .chips li.chip-mas { display: block; position: absolute; left: 0; top: 100%; z-index: 14; background: none; padding: 3px 0 0;
-    opacity: 0; pointer-events: none; transform: translateY(-3px); transition: opacity .15s, transform .15s; }
-  body.editando :is(.subtit:hover + .chips, .chips:hover) > li.chip-mas,
-  body.editando :is(.item, .creatividad:not(:has(.grupo-con)), .grupo-con):hover .chips > li.chip-mas { opacity: 1; pointer-events: auto; transform: none; }
+  body.editando .chips .chip-mas { display: block; position: absolute; z-index: 14; background: none; padding: 0;
+    opacity: 0; visibility: hidden; transition: opacity .15s .25s, visibility 0s .4s; }
+  body.editando .chips li.chip-mas { left: 0; top: 0; }
+  body.editando .chips li > .chip-mas { left: calc(100% + 9px); top: 50%; transform: translateY(-50%); }
+  body.editando :is(.subtit:hover + .chips, .chips:hover) .chip-mas,
+  body.editando :is(.item, .creatividad:not(:has(.grupo-con)), .grupo-con):hover .chips .chip-mas { opacity: 1; visibility: visible; transition-delay: 0s; }
   body.editando .chip-mas button { position: relative; display: block; width: 16px; height: 16px; border: 0; border-radius: 50%; padding: 0;
     background: var(--azul); cursor: pointer; box-shadow: 0 2px 6px rgba(32,32,128,.3); }
   /* el «+» dibujado con dos rayas: fino y siempre centrado (el de la letra queda grueso y torcido) */
@@ -351,10 +354,14 @@
   };
   const ico = (n, cls = "") => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true">${I[n]}</svg>`;
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const chips = (arr, cls = "", p = "") => `<ul class="chips ${cls}">${arr.map((t, i) => `<li${p ? ` data-drag data-grupo="${p}" data-i="${i}"` : ""}>${p ? ed(`${p}.${i}`, t) +
-      `<button class="chip-x" data-borrar="${p}.${i}" title="Quitar">×</button>` : esc(t)}</li>`).join("")}${
-      p ? `<li class="chip-mas"><button data-anadir="${p}" title="Añadir etiqueta" aria-label="Añadir etiqueta"></button></li>` : ""}</ul>
+  // En el editor, el «+» para añadir va pegado a la derecha de la última etiqueta (o donde iría la primera si no hay)
+  const chips = (arr, cls = "", p = "") => {
+    const mas = tag => `<${tag} class="chip-mas"><button data-anadir="${p}" title="Añadir etiqueta" aria-label="Añadir etiqueta"></button></${tag}>`;
+    return `<ul class="chips ${cls}">${arr.map((t, i) => `<li${p ? ` data-drag data-grupo="${p}" data-i="${i}"` : ""}>${p ? ed(`${p}.${i}`, t) +
+      `<button class="chip-x" data-borrar="${p}.${i}" title="Quitar">×</button>` + (i === arr.length - 1 ? mas("span") : "") : esc(t)}</li>`).join("")}${
+      p && !arr.length ? mas("li") : ""}</ul>
                                     <p class="solo-ats">${arr.map(esc).join(", ")}.</p>`;
+  };
   // Solo enlaces http(s): cualquier otra cosa (javascript:, data:…) se trata como texto de una web
   const url = s => (/^https?:\/\//i.test(s) ? s : "https://" + String(s).replace(/^[a-z][a-z0-9+.-]*:\/*/i, ""));
   // Código QR en SVG (librería qrcode-generator; si no carga, simplemente no se muestra)
