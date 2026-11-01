@@ -10,11 +10,11 @@ window.CV = {
   "titular": "Técnico de reparación electrónica",
   "perfil": "Técnico de reparación electrónica en KL KateaLegaia, con experiencia en diagnóstico y reparación de circuitos, pruebas funcionales, control de calidad y resolución de incidencias en producción. Promoción interna desde peón de producción hasta técnico de reparaciones. Desarrollo herramientas internas en Python y scripts en Bash que agilizan el trabajo diario, mejoran la trazabilidad y reducen tiempos de resolución.",
   "contacto": {
-    "email": "JosuManzanas64@Gmail.com",
+    "email": "josumanzanas64@gmail.com",
     "telefono": "688 885 991",
     "ubicacion": "Zarautz, Gipuzkoa",
-    "linkedin": "linkedin.com/in/josu-manzanas-beldarrain",
-    "github": "",
+    "linkedin": "linkedin.com/in/JosuManzanas",
+    "github": "github.com/JosuManzanas",
     "web": "JosuManzanas.com",
     "orden": [
       "ubicacion",
@@ -144,7 +144,7 @@ window.CV = {
   "formacion": [
     {
       "titulo": "IPI Zaragueta Herri Eskola",
-      "centro": "",
+      "centro": "Educación Primaria y ESO",
       "fechas": "2004 – 2016"
     }
   ],
